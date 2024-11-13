@@ -30,13 +30,13 @@ from abc import ABC, abstractmethod
 from core import (
     Estimator, Optimizer, Loss,
     check_array, check_X_y, check_is_fitted,
-    setup_logger, TrainingLogger,
+    get_logger, TrainingLogger,
     Number, Array, Features, Target,
     EPSILON, DEFAULT_RANDOM_STATE
 )
 
 # Configure logging
-logger = setup_logger(__name__)
+logger = get_logger(__name__)
 
 class BaseOptimizer(Optimizer):
     """Abstract base class for SVM optimizers."""

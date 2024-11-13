@@ -1,23 +1,14 @@
-"""Visualization utilities for machine learning analysis and model evaluation.
-
-This module provides robust visualization functions for:
-- Learning curves and training history
-- Decision boundaries and model predictions 
-- Distance analysis and geometric visualizations
-- Model evaluation metrics and curves
-
-All functions handle input validation and error cases gracefully.
-"""
+"""Visualization utilities for machine learning analysis."""
 
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import Optional, Dict, List, Union, Any, Tuple
 from sklearn.metrics import roc_curve, precision_recall_curve
-import logging
 from pathlib import Path
+from core.logging import get_logger
 
-# Configure logging
-logger = logging.getLogger(__name__)
+# Configure logging using core logger
+logger = get_logger(__name__)
 
 def plot_learning_curves(history: Dict[str, List[float]],
                         title: Optional[str] = None,

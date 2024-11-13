@@ -3,12 +3,11 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from typing import Optional, Dict, Any, List, Tuple, Union, Callable
-import logging
+from .logging import get_logger
 from .validation import check_array, check_X_y, check_is_fitted
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class Estimator(ABC):
     """Base class for all estimators."""

@@ -8,6 +8,9 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from .base import BaseClassifier
 from core.optimizers import BaseOptimizer, AdamOptimizer
+from core.logging import get_logger
+
+logger = get_logger(__name__)
 
 class SoftmaxClassifier(BaseClassifier):
     """Softmax classifier with regularization and custom optimizer."""

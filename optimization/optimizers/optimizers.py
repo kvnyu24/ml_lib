@@ -22,10 +22,10 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
 from core.base import Optimizer, Function
-from core.utils import setup_logger
+from core.logging import get_logger
 
 # Configure logging
-logger = setup_logger(__name__)
+logger = get_logger(__name__)
 
 class ParticleSwarmOptimizer(Optimizer):
     """Particle Swarm Optimization (PSO) algorithm."""

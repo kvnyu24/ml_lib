@@ -29,6 +29,9 @@ from core import (
     EPSILON, DEFAULT_RANDOM_STATE, SUPPORTED_ACTIVATIONS,
     Number, Array, Features, Target
 )
+from core.logging import get_logger
+
+logger = get_logger(__name__)
 
 class Layer(BaseLayer):
     """Base class for neural network layers."""

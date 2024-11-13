@@ -5,6 +5,9 @@ from typing import Optional, List, Union
 from itertools import combinations
 from core import BaseTransformer
 from core.validation import check_array
+from core.logging import get_logger
+
+logger = get_logger(__name__)
 
 class PolynomialFeatures(BaseTransformer):
     """Generate polynomial and interaction features."""
