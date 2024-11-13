@@ -5,9 +5,9 @@ from pathlib import Path
 from openai import OpenAI
 
 # Set the folder paths
-BASE_DIR = "../"
+BASE_DIR = "../../"
 SOURCE_FOLDER = os.path.join(BASE_DIR, "hw")
-LIBRARY_FOLDER = os.path.join(BASE_DIR, "ml_algo_lib/refactored")
+LIBRARY_FOLDER = os.path.join(BASE_DIR, "ml_algo_lib/")
 
 # Create the library folder if it doesn't exist
 os.makedirs(LIBRARY_FOLDER, exist_ok=True)
@@ -58,22 +58,27 @@ def extract_functions_from_code(code):
 
 def generate_refactored_code_with_llm(code, notebook_name):
     """Uses an LLM to generate semantically meaningful and well-structured library code."""
-    prompt = (
-        f"The following code was extracted from a Jupyter notebook named '{notebook_name}'. "
-        "Refactor the code into well-structured and reusable libraries, ensuring clean interfaces and meaningful separation of functionality.\n\n"
-        f"{code}\n\n"
-        "Provide the refactored code with explanations for each module created, making it easy to understand and maintain."
-    )
-    
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant that refactors code into well-structured libraries."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3
-    )
-    return response.choices[0].message.content.strip()
+    try:
+        prompt = (
+            f"The following code was extracted from a Jupyter notebook named '{notebook_name}'. "
+            "Refactor the code into well-structured and reusable libraries, ensuring clean interfaces and meaningful separation of functionality.\n\n"
+            f"{code}\n\n"
+            "Provide the refactored code with explanations for each module created, making it easy to understand and maintain."
+        )
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that refactors code into well-structured libraries."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Error during API call: {str(e)}")
+        print("Please check your OpenAI API key and quota limits at: https://platform.openai.com/account/usage")
+        return f"# Error occurred during refactoring:\n# {str(e)}\n\n{code}"
 
 def extract_and_refactor():
     # Traverse through all homework notebooks in the directory
