@@ -1,0 +1,8 @@
+numpy>=1.19.0
+scipy>=1.6.0
+matplotlib>=3.3.0
+tqdm>=4.0.0
+networkx>=2.5
+gensim>=4.0.0  # For Word2Vec encoding
+nltk>=3.6.0    # For text preprocessing
+opencv-python>=4.5.0  # For image processing (cv2) 

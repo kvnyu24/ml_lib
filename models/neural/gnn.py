@@ -1,46 +1,35 @@
-"""Experimental graph neural network layers."""
+"""Graph neural network implementations."""
 
 import numpy as np
-from typing import Optional, Dict, Union, Callable
+from typing import Optional, Union, Callable
 from core import (
     Layer,
     EPSILON,
     DEFAULT_RANDOM_STATE
 )
-from scipy import sparse
-import warnings
 
 class GraphConvolution(Layer):
-    """Graph convolutional layer with support for different normalization schemes and activations.
+    """Graph convolutional layer.
     
     Implements the graph convolution operation from Kipf & Welling (2017):
     https://arxiv.org/abs/1609.02907
     """
     
-    SUPPORTED_ACTIVATIONS = {
-        'relu': lambda x: np.maximum(0, x),
-        'sigmoid': lambda x: 1 / (1 + np.exp(-x)),
-        'tanh': np.tanh,
-        'leaky_relu': lambda x, alpha=0.01: np.where(x > 0, x, alpha * x)
-    }
-    
     def __init__(self,
                  in_features: int,
                  out_features: int, 
-                 activation: Optional[Union[str, Callable]] = 'relu',
-                 dropout: float = 0.0,
+                 activation: Optional[str] = 'relu',
+                 dropout: float = 0.1,
                  use_bias: bool = True,
-                 weight_init: str = 'glorot_uniform',
                  norm_type: str = 'symmetric'):
         """Initialize the layer.
         
         Args:
             in_features: Number of input features per node
             out_features: Number of output features per node
-            activation: Activation function ('relu', 'sigmoid', 'tanh', 'leaky_relu' or callable)
+            activation: Activation function ('relu', 'sigmoid', 'tanh')
             dropout: Dropout rate between 0 and 1
             use_bias: Whether to use bias term
-            weight_init: Weight initialization scheme ('glorot_uniform', 'glorot_normal', 'he')
             norm_type: Graph normalization type ('symmetric', 'left', 'right')
         """
         super().__init__()
@@ -53,41 +42,20 @@ class GraphConvolution(Layer):
         self.dropout = dropout
         self.use_bias = use_bias
         self.norm_type = norm_type
+        self.activation = activation
         
-        # Set activation function
-        if isinstance(activation, str):
-            self.activation_fn = self.SUPPORTED_ACTIVATIONS.get(activation.lower())
-            if self.activation_fn is None:
-                raise ValueError(f"Unsupported activation: {activation}")
-        elif callable(activation):
-            self.activation_fn = activation
-        else:
-            self.activation_fn = None
-            
-        # Initialize weights
-        self.W = self._initialize_weights(weight_init)
-        self.b = np.zeros(out_features) if use_bias else None
+        # Will be initialized during build
+        self.W = None
+        self.b = None
         
-        # For gradient updates
-        self.dW = np.zeros_like(self.W)
-        self.db = np.zeros_like(self.b) if use_bias else None
+    def build(self, input_shape: tuple) -> None:
+        """Initialize layer parameters."""
+        # Xavier/Glorot initialization
+        limit = np.sqrt(6 / (self.in_features + self.out_features))
+        self.W = np.random.uniform(-limit, limit, (self.in_features, self.out_features))
         
-        # Cache for backward pass
-        self.cache = {}
-        
-    def _initialize_weights(self, init_type: str) -> np.ndarray:
-        """Initialize weights using different schemes."""
-        if init_type == 'glorot_uniform':
-            limit = np.sqrt(6 / (self.in_features + self.out_features))
-            return np.random.uniform(-limit, limit, (self.in_features, self.out_features))
-        elif init_type == 'glorot_normal':
-            std = np.sqrt(2 / (self.in_features + self.out_features))
-            return np.random.normal(0, std, (self.in_features, self.out_features))
-        elif init_type == 'he':
-            std = np.sqrt(2 / self.in_features)
-            return np.random.normal(0, std, (self.in_features, self.out_features))
-        else:
-            raise ValueError(f"Unsupported weight initialization: {init_type}")
+        if self.use_bias:
+            self.b = np.zeros(self.out_features)
     
     def _normalize_adj(self, A: np.ndarray) -> np.ndarray:
         """Normalize adjacency matrix based on normalization type."""
@@ -121,6 +89,9 @@ class GraphConvolution(Layer):
         Returns:
             Output features of shape (num_nodes, out_features)
         """
+        if not hasattr(self, 'W'):
+            self.build(X.shape)
+            
         if X.shape[1] != self.in_features:
             raise ValueError(f"Expected {self.in_features} input features, got {X.shape[1]}")
             
@@ -132,16 +103,16 @@ class GraphConvolution(Layer):
         # Normalize adjacency matrix
         A_norm = self._normalize_adj(A)
         
-        # Cache for backward pass
-        self.cache['X'] = X
-        self.cache['A_norm'] = A_norm
-        
         # Graph convolution operation
         Z = A_norm @ X @ self.W
         if self.use_bias:
             Z = Z + self.b
             
         # Apply activation
-        if self.activation_fn is not None:
-            return self.activation_fn(Z)
+        if self.activation == 'relu':
+            return np.maximum(0, Z)
+        elif self.activation == 'sigmoid':
+            return 1 / (1 + np.exp(-Z))
+        elif self.activation == 'tanh':
+            return np.tanh(Z)
         return Z
