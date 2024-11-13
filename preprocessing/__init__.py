@@ -29,6 +29,7 @@ from .missing import (
 
 from .outliers import (
     OutlierDetector,
+    IQROutlierDetector,
     IsolationForest,
     LocalOutlierFactor
 )
@@ -98,6 +99,7 @@ __all__ = [
     
     # Outliers
     'OutlierDetector',
+    'IQROutlierDetector',
     'IsolationForest',
     'LocalOutlierFactor',
     
