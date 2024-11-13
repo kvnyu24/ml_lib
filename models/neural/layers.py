@@ -3,7 +3,6 @@
 import numpy as np
 from typing import Optional, Union, Tuple, Callable
 from core import Layer, EPSILON
-
 class Dense(Layer):
     """Fully connected layer."""
     

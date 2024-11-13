@@ -2,7 +2,7 @@
 
 from .mlp import MLP, AffineLayer, CrossEntropyLoss
 from .layers import Dense, BatchNormalization, MaxPool2D, GlobalAveragePooling2D, Dropout, Flatten
-from .activations import Activation
+from .activations import get_activation, ReLU, Sigmoid, Tanh, Softmax
 from .losses import MSELoss, CrossEntropyLoss
 from .cnn import Conv2D
 from .rnn import RNNCell
@@ -19,7 +19,11 @@ __all__ = [
     'GlobalAveragePooling2D',
     'Dropout',
     'Flatten',
-    'Activation',
+    'get_activation',
+    'ReLU',
+    'Sigmoid',
+    'Tanh',
+    'Softmax',
     'MSELoss',
     'CrossEntropyLoss',
     'Conv2D',

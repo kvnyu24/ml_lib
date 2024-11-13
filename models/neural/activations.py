@@ -1,51 +1,90 @@
 """Activation function implementations."""
 
 import numpy as np
-from typing import Callable
-from core import EPSILON
+from core import Layer, EPSILON
 
-class Activation:
-    """Base class for activation functions."""
+class ReLU(Layer):
+    """ReLU activation layer."""
     
-    @staticmethod
-    def get(name: str) -> tuple[Callable, Callable]:
-        """Get activation function and its derivative."""
-        if name == 'relu':
-            return Activation.relu, Activation.relu_prime
-        elif name == 'sigmoid':
-            return Activation.sigmoid, Activation.sigmoid_prime
-        elif name == 'tanh':
-            return Activation.tanh, Activation.tanh_prime
-        else:
-            raise ValueError(f"Unknown activation function: {name}")
+    def __init__(self, alpha: float = 0.0):
+        """Initialize ReLU layer.
+        
+        Args:
+            alpha: Slope for negative values (LeakyReLU if > 0)
+        """
+        super().__init__()
+        self.alpha = alpha
+        self.x = None
+        
+    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
+        """Forward pass applying ReLU activation."""
+        self.x = x if training else None
+        return np.where(x > 0, x, self.alpha * x)
+        
+    def backward(self, upstream_grad: np.ndarray) -> np.ndarray:
+        """Backward pass computing gradients."""
+        return upstream_grad * np.where(self.x > 0, 1, self.alpha)
+
+class Sigmoid(Layer):
+    """Sigmoid activation layer."""
     
-    @staticmethod
-    def relu(x: np.ndarray) -> np.ndarray:
-        """ReLU activation function."""
-        return np.maximum(0, x)
+    def __init__(self):
+        super().__init__()
+        self.output = None
         
-    @staticmethod
-    def relu_prime(x: np.ndarray) -> np.ndarray:
-        """ReLU derivative."""
-        return np.where(x > 0, 1, 0)
+    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
+        """Forward pass applying sigmoid activation."""
+        self.output = 1 / (1 + np.exp(-np.clip(x, -500, 500)))
+        return self.output
         
-    @staticmethod
-    def sigmoid(x: np.ndarray) -> np.ndarray:
-        """Sigmoid activation function."""
-        return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
+    def backward(self, upstream_grad: np.ndarray) -> np.ndarray:
+        """Backward pass computing gradients."""
+        return upstream_grad * self.output * (1 - self.output)
+
+class Tanh(Layer):
+    """Hyperbolic tangent activation layer."""
+    
+    def __init__(self):
+        super().__init__()
+        self.output = None
         
-    @staticmethod
-    def sigmoid_prime(x: np.ndarray) -> np.ndarray:
-        """Sigmoid derivative."""
-        s = Activation.sigmoid(x)
-        return s * (1 - s)
+    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
+        """Forward pass applying tanh activation."""
+        self.output = np.tanh(x)
+        return self.output
         
-    @staticmethod
-    def tanh(x: np.ndarray) -> np.ndarray:
-        """Hyperbolic tangent activation function."""
-        return np.tanh(x)
+    def backward(self, upstream_grad: np.ndarray) -> np.ndarray:
+        """Backward pass computing gradients."""
+        return upstream_grad * (1 - self.output ** 2)
+
+class Softmax(Layer):
+    """Softmax activation layer."""
+    
+    def __init__(self):
+        super().__init__()
+        self.output = None
         
-    @staticmethod
-    def tanh_prime(x: np.ndarray) -> np.ndarray:
-        """Hyperbolic tangent derivative."""
-        return 1 - np.tanh(x) ** 2 
+    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
+        """Forward pass applying softmax activation."""
+        # Subtract max for numerical stability
+        exp_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
+        self.output = exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+        return self.output
+        
+    def backward(self, upstream_grad: np.ndarray) -> np.ndarray:
+        """Backward pass computing gradients."""
+        # Jacobian matrix of softmax times upstream gradient
+        return self.output * (upstream_grad - np.sum(upstream_grad * self.output, axis=-1, keepdims=True))
+
+def get_activation(name: str) -> Layer:
+    """Get activation layer by name."""
+    if name == 'relu':
+        return ReLU()
+    elif name == 'sigmoid':
+        return Sigmoid() 
+    elif name == 'tanh':
+        return Tanh()
+    elif name == 'softmax':
+        return Softmax()
+    else:
+        raise ValueError(f"Unknown activation function: {name}")

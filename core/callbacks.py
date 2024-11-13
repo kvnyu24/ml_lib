@@ -8,6 +8,9 @@ import time
 class Callback(ABC):
     """Base class for callbacks."""
     
+    def __init__(self):
+        self.__name__ = self.__class__.__name__
+    
     def on_train_begin(self, logs: Optional[Dict] = None) -> None:
         pass
     
@@ -32,6 +35,7 @@ class EarlyStopping(Callback):
     def __init__(self, monitor: str = 'val_loss', 
                  patience: int = 0,
                  min_delta: float = 0.0):
+        super().__init__()
         self.monitor = monitor
         self.patience = patience
         self.min_delta = min_delta
@@ -59,6 +63,7 @@ class ModelCheckpoint(Callback):
     def __init__(self, filepath: str, 
                  monitor: str = 'val_loss',
                  save_best_only: bool = False):
+        super().__init__()
         self.filepath = filepath
         self.monitor = monitor
         self.save_best_only = save_best_only
@@ -74,4 +79,4 @@ class ModelCheckpoint(Callback):
                 self.best = current
                 self.model.save(self.filepath)
         else:
-            self.model.save(f"{self.filepath}_epoch_{epoch}") 
+            self.model.save(f"{self.filepath}_epoch_{epoch}")

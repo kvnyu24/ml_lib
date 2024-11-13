@@ -8,7 +8,7 @@ from sklearn.datasets import fetch_openml
 # Add the root directory to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from models.neural import MLP, Dense, CrossEntropyLoss, Activation
+from models.neural import MLP, Dense, CrossEntropyLoss, ReLU, Softmax
 from core import EarlyStopping
 from preprocessing import StandardScaler, OneHotEncoder
 
@@ -47,11 +47,11 @@ def main():
     # Create layers
     layers = [
         Dense(784, 128),
-        Activation('relu'),
+        ReLU(),
         Dense(128, 64),
-        Activation('relu'),
+        ReLU(),
         Dense(64, 10),
-        Activation('softmax')
+        Softmax()
     ]
     
     # Create model with early stopping
