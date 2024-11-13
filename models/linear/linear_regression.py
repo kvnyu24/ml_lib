@@ -31,6 +31,7 @@ from core import (
 )
 
 from optimization.optimizers import AdamOptimizer, RMSpropOptimizer
+from evaluation import ModelEvaluator
 
 # Configure logging
 logger = get_logger(__name__)
@@ -94,25 +95,6 @@ class ElasticNetRegression(Estimator):
             X = np.c_[np.ones(X.shape[0]), X]
             
         return X @ self.weights
-
-class ModelEvaluator:
-    """Model evaluation and metrics."""
-    
-    @staticmethod
-    def evaluate_regression(model: Estimator,
-                          X: Features,
-                          y: Target) -> Dict[str, float]:
-        """Evaluate regression model."""
-        check_is_fitted(model)
-        X, y = check_X_y(X, y)
-        y_pred = model.predict(X)
-        
-        return {
-            'mse': np.mean((y - y_pred) ** 2),
-            'rmse': np.sqrt(np.mean((y - y_pred) ** 2)),
-            'mae': np.mean(np.abs(y - y_pred)),
-            'r2': 1 - np.sum((y - y_pred) ** 2) / np.sum((y - np.mean(y)) ** 2)
-        }
 
 class Visualizer:
     """Visualization utilities."""
