@@ -5,7 +5,6 @@ from typing import List, Optional, Dict, Union
 from .base import BaseClassifier
 from optimization.optimizers import SGD, Adam
 from core import (
-    BaseClassifier,
     get_logger,
     check_array,
     check_X_y,

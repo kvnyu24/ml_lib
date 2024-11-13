@@ -5,11 +5,9 @@ import numpy as np
 from typing import Dict
 from core import (
     Estimator,
-    accuracy,
-    precision,
-    recall,
-    f1,
-    roc_auc
+    Metric,
+    Accuracy,
+    get_metric
 )
 
 class BaseClassifier(Estimator, ABC):
@@ -31,13 +29,13 @@ class BaseClassifier(Estimator, ABC):
         y_proba = self.predict_proba(X) if hasattr(self, 'predict_proba') else None
         
         metrics = {
-            'accuracy': accuracy(y, y_pred),
-            'precision': precision(y, y_pred, average='weighted'),
-            'recall': recall(y, y_pred, average='weighted'),
-            'f1': f1(y, y_pred, average='weighted')
+            'accuracy': get_metric('accuracy')(y, y_pred),
+            'precision': get_metric('precision')(y, y_pred, average='weighted'),
+            'recall': get_metric('recall')(y, y_pred, average='weighted'),
+            'f1': get_metric('f1')(y, y_pred, average='weighted')
         }
         
         if y_proba is not None:
-            metrics['roc_auc'] = roc_auc(y, y_proba, multi_class='ovr')
+            metrics['roc_auc'] = get_metric('roc_auc')(y, y_proba, multi_class='ovr')
             
         return metrics

@@ -64,4 +64,81 @@ class MinMaxScaler(Transformer):
         X_std = (X - self.min_) / self.scale_
         X_scaled = X_std * (self.feature_range[1] - self.feature_range[0]) + self.feature_range[0]
         
-        return X_scaled 
+        return X_scaled
+
+class RobustScaler(Transformer):
+    """Scale features using statistics that are robust to outliers."""
+    
+    def __init__(self, with_centering: bool = True, with_scaling: bool = True, 
+                 quantile_range: tuple = (25.0, 75.0)):
+        self.with_centering = with_centering
+        self.with_scaling = with_scaling
+        self.quantile_range = quantile_range
+        self.center_ = None
+        self.scale_ = None
+        
+    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'RobustScaler':
+        """Compute median and quantiles to be used for scaling."""
+        X = check_array(X)
+        
+        q_min, q_max = self.quantile_range
+        if self.with_centering:
+            self.center_ = np.median(X, axis=0)
+        if self.with_scaling:
+            q = np.percentile(X, [q_min, q_max], axis=0)
+            self.scale_ = (q[1] - q[0])
+            self.scale_ = np.where(self.scale_ == 0, 1.0, self.scale_)
+            
+        return self
+        
+    def transform(self, X: np.ndarray) -> np.ndarray:
+        """Perform robust scaling."""
+        X = check_array(X)
+        
+        if self.with_centering:
+            X = X - self.center_
+        if self.with_scaling:
+            X = X / self.scale_
+            
+        return X
+
+class QuantileScaler(Transformer):
+    """Transform features using quantile information."""
+    
+    def __init__(self, n_quantiles: int = 1000, output_distribution: str = 'uniform'):
+        self.n_quantiles = n_quantiles
+        self.output_distribution = output_distribution
+        self.quantiles_ = None
+        self.references_ = None
+        
+    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'QuantileScaler':
+        """Compute quantiles for the transformation."""
+        X = check_array(X)
+        
+        self.quantiles_ = []
+        for feature_idx in range(X.shape[1]):
+            quantiles = np.percentile(
+                X[:, feature_idx],
+                np.linspace(0, 100, self.n_quantiles)
+            )
+            self.quantiles_.append(quantiles)
+            
+        self.references_ = np.linspace(0, 1, self.n_quantiles)
+        if self.output_distribution == 'normal':
+            self.references_ = np.sqrt(2) * np.erfinv(2 * self.references_ - 1)
+            
+        return self
+        
+    def transform(self, X: np.ndarray) -> np.ndarray:
+        """Transform features using quantile transformation."""
+        X = check_array(X)
+        X_transformed = np.zeros_like(X)
+        
+        for feature_idx in range(X.shape[1]):
+            X_transformed[:, feature_idx] = np.interp(
+                X[:, feature_idx],
+                self.quantiles_[feature_idx],
+                self.references_
+            )
+            
+        return X_transformed

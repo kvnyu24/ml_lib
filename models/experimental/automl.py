@@ -5,12 +5,12 @@ import time
 from typing import List, Dict, Optional, Union
 from core import (
     Estimator,
-    KFoldCV,
     get_metric,
     check_array,
     check_X_y,
     ValidationError
 )
+from models.evaluation import KFoldCV
 
 class AutoML:
     """Automated machine learning implementation with robust model selection and tuning."""
@@ -40,7 +40,7 @@ class AutoML:
         self.models = models
         self.param_distributions = param_distributions
         self.max_time = max_time
-        self.cv = KFoldCV(n_splits=cv)
+        self.cv = KFoldCV(n_splits=cv, shuffle=True, random_state=random_state)
         self.metric = get_metric(metric)
         self.n_trials = n_trials
         self.random_state = random_state

@@ -5,12 +5,12 @@ from typing import Optional, List, Union, Dict
 from scipy.stats import entropy
 from core import (
     Estimator,
-    model_selection,
     DEFAULT_RANDOM_STATE,
     ValidationError,
     check_array,
     euclidean_distance
 )
+from models.evaluation import ModelSelector
 
 class ActiveLearner:
     """Active learning implementation with support for multiple query strategies.
@@ -99,15 +99,15 @@ class ActiveLearner:
             
         try:
             if self.query_strategy == 'uncertainty':
-                probas = model_selection.predict_proba(self.model, X_pool)
+                probas = self.model.predict_proba(X_pool)
                 scores = 1 - np.max(probas, axis=1)
                 
             elif self.query_strategy == 'entropy':
-                probas = model_selection.predict_proba(self.model, X_pool)
+                probas = self.model.predict_proba(X_pool)
                 scores = entropy(probas.T)
                 
             elif self.query_strategy == 'margin':
-                probas = model_selection.predict_proba(self.model, X_pool)
+                probas = self.model.predict_proba(X_pool)
                 sorted_probas = np.sort(probas, axis=1)
                 scores = sorted_probas[:,-1] - sorted_probas[:,-2]
                 scores = 1 - scores  # Convert to uncertainty
@@ -118,7 +118,7 @@ class ActiveLearner:
             elif self.query_strategy == 'qbc':
                 all_preds = []
                 for model in self.models:
-                    probas = model_selection.predict_proba(model, X_pool)
+                    probas = model.predict_proba(X_pool)
                     all_preds.append(probas)
                 all_preds = np.array(all_preds)
                 scores = np.mean(np.std(all_preds, axis=0), axis=1)

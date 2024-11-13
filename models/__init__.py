@@ -65,9 +65,10 @@ from .topic import (
 )
 
 from .experimental import (
-    QuantumNeuralNetwork,
-    CapsuleNetwork,
-    GraphNeuralNetwork,
+    ActiveLearner,
+    MetaLearner,
+    TransferLearner,
+    NeuralODE,
     AutoML
 )
 
@@ -144,11 +145,11 @@ __all__ = [
     'TimeFrequencyAnalyzer',
     
     # Experimental models
-    'QuantumNeuralNetwork',
-    'CapsuleNetwork',
-    'GraphNeuralNetwork',
+    'ActiveLearner',
+    'MetaLearner',
+    'TransferLearner',
+    'NeuralODE',
     'AutoML',
-    
     # Classification
     'LDA',
     'BaseClassifier',
