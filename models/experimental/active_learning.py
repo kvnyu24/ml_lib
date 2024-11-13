@@ -2,6 +2,7 @@
 
 import numpy as np
 from core.base import BaseEstimator
+from ..evaluation import model_selection
 
 class ActiveLearner:
     """Active learning implementation."""
@@ -13,7 +14,7 @@ class ActiveLearner:
     def query(self, X_pool: np.ndarray, n_instances: int = 1) -> np.ndarray:
         """Select most informative instances for labeling."""
         if self.query_strategy == 'uncertainty':
-            probas = self.model.predict_proba(X_pool)
+            probas = model_selection.predict_proba(self.model, X_pool)
             uncertainties = 1 - np.max(probas, axis=1)
             return np.argsort(uncertainties)[-n_instances:]
-        return np.random.choice(len(X_pool), n_instances, replace=False) 
+        return np.random.choice(len(X_pool), n_instances, replace=False)

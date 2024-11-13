@@ -39,7 +39,11 @@ from .topic import (
     LatentDirichletAllocation
 )
 
-from .ensemble import EnsembleLearner
+from .ensemble import (
+    GradientBoostingRegressor,
+    XGBoostRegressor,
+    LightGBMRegressor
+)
 
 # Evaluation utilities
 from .evaluation import (
@@ -69,9 +73,12 @@ __all__ = [
     # Advanced Learning
     'MetaLearner',
     'TransferLearner',
-    'EnsembleLearner',
     'AutoML',
     'NeuralODE',
+    'ActiveLearner',
+    'GradientBoostingRegressor',
+    'XGBoostRegressor',
+    'LightGBMRegressor',
 
     # Topic modeling
     'LatentDirichletAllocation',

@@ -3,9 +3,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import Optional, Dict, List, Union, Any, Tuple
-from sklearn.metrics import roc_curve, precision_recall_curve
 from pathlib import Path
 from core.logging import get_logger
+from core.metrics import roc_curve, precision_recall_curve
 
 # Configure logging using core logger
 logger = get_logger(__name__)
@@ -94,6 +94,73 @@ def plot_decision_boundary(model: Any,
             
     except Exception as e:
         logger.error(f"Error plotting decision boundary: {str(e)}")
+        raise
+
+def plot_roc_curve(y_true: np.ndarray,
+                  y_pred: np.ndarray,
+                  title: Optional[str] = None,
+                  figsize: Tuple[int, int] = (10, 6),
+                  save_path: Optional[str] = None) -> None:
+    """Plot ROC curve.
+    
+    Args:
+        y_true: Ground truth labels
+        y_pred: Predicted probabilities
+        title: Plot title (optional)
+        figsize: Figure dimensions
+        save_path: Path to save figure (optional)
+    """
+    try:
+        fpr, tpr, _ = roc_curve(y_true, y_pred)
+        
+        plt.figure(figsize=figsize)
+        plt.plot(fpr, tpr, 'b-', label='ROC curve', linewidth=2)
+        plt.plot([0, 1], [0, 1], 'k--', label='Random')
+        plt.xlabel('False Positive Rate', fontsize=12)
+        plt.ylabel('True Positive Rate', fontsize=12)
+        plt.title(title or 'ROC Curve', fontsize=14)
+        plt.legend(fontsize=10)
+        plt.grid(True)
+        
+        if save_path:
+            plt.savefig(save_path)
+        plt.show()
+        
+    except Exception as e:
+        logger.error(f"Error plotting ROC curve: {str(e)}")
+        raise
+
+def plot_precision_recall_curve(y_true: np.ndarray,
+                              y_pred: np.ndarray,
+                              title: Optional[str] = None,
+                              figsize: Tuple[int, int] = (10, 6),
+                              save_path: Optional[str] = None) -> None:
+    """Plot precision-recall curve.
+    
+    Args:
+        y_true: Ground truth labels
+        y_pred: Predicted probabilities
+        title: Plot title (optional)
+        figsize: Figure dimensions
+        save_path: Path to save figure (optional)
+    """
+    try:
+        precision, recall, _ = precision_recall_curve(y_true, y_pred)
+        
+        plt.figure(figsize=figsize)
+        plt.plot(recall, precision, 'b-', label='PR curve', linewidth=2)
+        plt.xlabel('Recall', fontsize=12)
+        plt.ylabel('Precision', fontsize=12)
+        plt.title(title or 'Precision-Recall Curve', fontsize=14)
+        plt.legend(fontsize=10)
+        plt.grid(True)
+        
+        if save_path:
+            plt.savefig(save_path)
+        plt.show()
+        
+    except Exception as e:
+        logger.error(f"Error plotting precision-recall curve: {str(e)}")
         raise
 
 class DistanceVisualizer:
