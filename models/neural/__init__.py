@@ -1,7 +1,7 @@
 """Neural network implementations."""
 
 from .mlp import MLP
-from .layers import Dense
+from .layers import Dense, BatchNormalization, MaxPool2D, GlobalAveragePooling2D, Dropout, Flatten
 from .activations import Activation
 from .losses import MSELoss, CrossEntropyLoss
 from .cnn import Conv2D
@@ -12,6 +12,11 @@ from .gnn import GraphConvolution
 __all__ = [
     'MLP',
     'Dense',
+    'BatchNormalization',
+    'MaxPool2D',
+    'GlobalAveragePooling2D',
+    'Dropout',
+    'Flatten',
     'Activation',
     'MSELoss',
     'CrossEntropyLoss',
