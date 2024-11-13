@@ -2,7 +2,7 @@
 
 import logging
 import sys
-from typing import Optional
+from typing import Optional, Dict, List
 from pathlib import Path
 
 def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:

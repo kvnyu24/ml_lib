@@ -8,7 +8,7 @@ from .cnn import Conv2D
 from .rnn import RNNCell
 from .transformer import MultiHeadAttention, TransformerBlock, LayerNorm
 from .gnn import GraphConvolution
-
+from .resnet import ResidualBlock, ResNet
 __all__ = [
     'MLP',
     'Dense',
@@ -25,5 +25,7 @@ __all__ = [
     'MultiHeadAttention',
     'TransformerBlock',
     'LayerNorm',
-    'GraphConvolution'
+    'GraphConvolution',
+    'ResidualBlock',
+    'ResNet'
 ] 

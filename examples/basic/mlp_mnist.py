@@ -1,6 +1,12 @@
 """Basic MLP example using MNIST dataset."""
 
 import numpy as np
+import sys
+import os
+
+# Add the root directory to Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
 from models.neural import MLP
 from core import EarlyStopping
 from preprocessing import StandardScaler
@@ -45,4 +51,4 @@ def main():
     print(history)
 
 if __name__ == '__main__':
-    main() 
+    main()

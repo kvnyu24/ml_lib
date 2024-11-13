@@ -38,11 +38,11 @@ class ModelConfig:
 @dataclass
 class TrainingConfig:
     """Training configuration."""
-    batch_size: int = DEFAULT_TRAINING_CONFIG['batch_size']
-    epochs: int = DEFAULT_TRAINING_CONFIG['epochs']
-    validation_split: float = DEFAULT_TRAINING_CONFIG['validation_split']
-    shuffle: bool = DEFAULT_TRAINING_CONFIG['shuffle']
-    verbose: bool = DEFAULT_TRAINING_CONFIG['verbose']
+    batch_size: int = 32  # Default value instead of referencing dict
+    epochs: int = 100
+    validation_split: float = 0.2
+    shuffle: bool = True
+    verbose: bool = True
     early_stopping: bool = True
     patience: int = 5
     
