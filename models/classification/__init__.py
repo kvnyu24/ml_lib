@@ -6,10 +6,12 @@ from .classifiers import (
     SVMClassifier,
     EnsembleClassifier
 )
+from .lda import LDA
 
 __all__ = [
     'BaseClassifier',
     'SoftmaxClassifier',
     'SVMClassifier',
-    'EnsembleClassifier'
+    'EnsembleClassifier',
+    'LDA'
 ] 
