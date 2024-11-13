@@ -17,17 +17,24 @@ The implementation follows modern deep learning practices with clean interfaces
 for building and training neural networks.
 """
 
-# layers.py
 import numpy as np
 from typing import List, Optional, Union, Dict, Tuple, Callable
 import pickle
 import json
 from pathlib import Path
 
-class Layer:
+from core import (
+    Layer as BaseLayer, Loss as BaseLoss, Estimator,
+    check_array, check_X_y, check_is_fitted,
+    EPSILON, DEFAULT_RANDOM_STATE, SUPPORTED_ACTIVATIONS,
+    Number, Array, Features, Target
+)
+
+class Layer(BaseLayer):
     """Base class for neural network layers."""
     
     def __init__(self):
+        super().__init__()
         self.trainable = True
         self.training = True
         
@@ -162,8 +169,7 @@ class DropoutLayer(Layer):
     def backward(self, upstream_grad: np.ndarray) -> np.ndarray:
         return upstream_grad * self.mask
 
-# losses.py 
-class Loss:
+class Loss(BaseLoss):
     """Base class for loss functions."""
     
     @classmethod
@@ -209,8 +215,7 @@ class CrossEntropyLoss(Loss):
         grad[range(len(cls.y_true)), cls.y_true] -= 1
         return grad / len(cls.y_true)
 
-# mlp.py
-class MLP:
+class MLP(Estimator):
     """Multi-layer perceptron implementation."""
     
     def __init__(self, layers: List[Layer], loss_function: Loss,
@@ -224,6 +229,7 @@ class MLP:
             optimizer: Dict with optimizer config
             metrics: List of metric functions to track
         """
+        super().__init__()
         self.layers = layers
         self.loss_function = loss_function
         self.metrics = metrics or []
@@ -266,7 +272,7 @@ class MLP:
         if self.optimizer['type'] == 'adam':
             beta1 = self.optimizer.get('beta1', 0.9)
             beta2 = self.optimizer.get('beta2', 0.999)
-            eps = self.optimizer.get('epsilon', 1e-8)
+            eps = self.optimizer.get('epsilon', EPSILON)
             
             for layer in self.layers:
                 if layer.trainable:
@@ -306,7 +312,6 @@ class MLP:
         # Reconstruct model...
         return cls
 
-# utils.py
 def array_string(a: np.ndarray) -> str:
     """Convert array to formatted string representation."""
     if np.isscalar(a) or a.ndim == 0:

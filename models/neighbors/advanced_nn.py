@@ -1,33 +1,40 @@
-"""
-Advanced KNN and Geometry-Based ML Library
-========================================
+"""K-Nearest Neighbors advanced implementations."""
 
-Extends the base ML library with specialized KNN and geometry-based algorithms:
-
-- Advanced KNN variants (weighted, adaptive, condensed)
-- Geometric classification methods (Voronoi, Delaunay)
-- Local regression techniques (LOWESS, LWR)
-- Manifold learning and dimensionality reduction
-- Distance metric learning
-- Prototype selection and generation
-"""
-
+from typing import Literal, Optional, Tuple
 import numpy as np
-from typing import Dict, List, Optional, Tuple, Union, Callable
-from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
-from scipy.spatial import Voronoi, Delaunay
-from scipy.optimize import minimize
+from scipy.spatial import Voronoi
 
-class AdaptiveKNN(BaseEstimator, ClassifierMixin):
+from ml_library.core.base import Estimator
+from ml_library.core.validation import check_array, check_X_y, check_is_fitted
+from ml_library.core.exceptions import ValidationError
+
+class AdaptiveKNN(Estimator):
     """KNN classifier with adaptive neighborhood size."""
     
-    def __init__(self, min_k: int = 1, max_k: int = 50,
-                 distance_weighted: bool = True):
+    def __init__(
+        self,
+        min_k: int = 1,
+        max_k: int = 50,
+        weights: Literal['uniform', 'distance'] = 'distance'
+    ):
         self.min_k = min_k
         self.max_k = max_k
-        self.distance_weighted = distance_weighted
+        self.weights = weights
         
-    def fit(self, X: np.ndarray, y: np.ndarray):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> 'AdaptiveKNN':
+        """Fit the model using X as training data and y as target values."""
+        # Validate inputs
+        X, y = check_X_y(X, y)
+        
+        if self.min_k < 1:
+            raise ValidationError("min_k must be greater than zero")
+            
+        if self.max_k > len(X):
+            raise ValidationError(
+                f"max_k ({self.max_k}) cannot be larger than "
+                f"number of samples ({len(X)})"
+            )
+            
         self.X_train = X
         self.y_train = y
         
@@ -43,8 +50,8 @@ class AdaptiveKNN(BaseEstimator, ClassifierMixin):
             
             for k in range(self.min_k, min(self.max_k, len(sorted_idx))):
                 neighbors = sorted_idx[:k]
-                if self.distance_weighted:
-                    weights = 1 / (distances[neighbors] + 1e-6)
+                if self.weights == 'distance':
+                    weights = 1 / (distances[neighbors] + np.finfo(float).eps)
                     pred = np.bincount(y[neighbors], weights=weights)
                 else:
                     pred = np.bincount(y[neighbors])
@@ -60,14 +67,18 @@ class AdaptiveKNN(BaseEstimator, ClassifierMixin):
         return self
         
     def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict class labels for samples in X."""
+        check_is_fitted(self, ['X_train', 'y_train', 'optimal_k'])
+        X = check_array(X)
+        
         predictions = np.zeros(len(X))
         for i, x in enumerate(X):
             distances = np.linalg.norm(self.X_train - x, axis=1)
             k = int(np.mean(self.optimal_k)) # Use average optimal k
             neighbors = np.argsort(distances)[:k]
             
-            if self.distance_weighted:
-                weights = 1 / (distances[neighbors] + 1e-6)
+            if self.weights == 'distance':
+                weights = 1 / (distances[neighbors] + np.finfo(float).eps)
                 pred = np.bincount(self.y_train[neighbors], weights=weights)
             else:
                 pred = np.bincount(self.y_train[neighbors])
@@ -76,10 +87,14 @@ class AdaptiveKNN(BaseEstimator, ClassifierMixin):
             
         return predictions
 
-class LocallyWeightedRegression(BaseEstimator, RegressorMixin):
+class LocallyWeightedRegressor(Estimator):
     """Non-parametric locally weighted regression."""
     
-    def __init__(self, kernel: str = 'gaussian', bandwidth: float = 1.0):
+    def __init__(
+        self,
+        kernel: Literal['gaussian', 'epanechnikov'] = 'gaussian',
+        bandwidth: float = 1.0
+    ):
         self.kernel = kernel
         self.bandwidth = bandwidth
         self.kernels = {
@@ -87,12 +102,18 @@ class LocallyWeightedRegression(BaseEstimator, RegressorMixin):
             'epanechnikov': lambda d: np.maximum(0, (1 - (d/self.bandwidth)**2))
         }
         
-    def fit(self, X: np.ndarray, y: np.ndarray):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> 'LocallyWeightedRegressor':
+        """Store the training data."""
+        X, y = check_X_y(X, y)
         self.X_train = X
         self.y_train = y
         return self
         
     def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict target values for samples in X."""
+        check_is_fitted(self, ['X_train', 'y_train'])
+        X = check_array(X)
+        
         predictions = np.zeros(len(X))
         kernel_func = self.kernels[self.kernel]
         
@@ -114,13 +135,15 @@ class LocallyWeightedRegression(BaseEstimator, RegressorMixin):
                 
         return predictions
 
-class VoronoiClassifier(BaseEstimator, ClassifierMixin):
+class VoronoiClassifier(Estimator):
     """Classification based on Voronoi diagram of training points."""
     
     def __init__(self, metric: str = 'euclidean'):
         self.metric = metric
         
-    def fit(self, X: np.ndarray, y: np.ndarray):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> 'VoronoiClassifier':
+        """Fit the Voronoi classifier."""
+        X, y = check_X_y(X, y)
         self.X_train = X
         self.y_train = y
         
@@ -139,6 +162,10 @@ class VoronoiClassifier(BaseEstimator, ClassifierMixin):
         return self
         
     def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict class labels for samples in X."""
+        check_is_fitted(self, ['X_train', 'y_train', 'vor', 'region_labels'])
+        X = check_array(X)
+        
         predictions = np.zeros(len(X))
         for i, x in enumerate(X):
             # Find nearest training point
@@ -151,21 +178,25 @@ class VoronoiClassifier(BaseEstimator, ClassifierMixin):
             
         return predictions
 
-class PrototypeSelector:
+class PrototypeSelector(Estimator):
     """Intelligent prototype selection for KNN classification."""
     
-    def __init__(self, selection_method: str = 'condensed'):
+    def __init__(self, selection_method: Literal['condensed', 'edited'] = 'condensed'):
         self.selection_method = selection_method
         
-    def select_prototypes(self, X: np.ndarray, y: np.ndarray, 
-                         max_prototypes: Optional[int] = None) -> Tuple[np.ndarray, np.ndarray]:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> 'PrototypeSelector':
+        """Select prototypes from training data."""
+        X, y = check_X_y(X, y)
+        
         if self.selection_method == 'condensed':
-            return self._condensed_selection(X, y)
+            self.X_prototypes, self.y_prototypes = self._condensed_selection(X, y)
         elif self.selection_method == 'edited':
-            return self._edited_selection(X, y)
+            self.X_prototypes, self.y_prototypes = self._edited_selection(X, y)
         else:
-            raise ValueError(f"Unknown selection method: {self.selection_method}")
+            raise ValidationError(f"Unknown selection method: {self.selection_method}")
             
+        return self
+        
     def _condensed_selection(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Condensed Nearest Neighbor (CNN) selection."""
         prototypes = [X[0]]

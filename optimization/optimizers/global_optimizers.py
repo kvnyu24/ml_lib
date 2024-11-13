@@ -1,71 +1,23 @@
-"""
-Optimization and Function Analysis Library
-========================================
-
-A comprehensive library for optimization and function analysis:
-
-- Advanced optimization algorithms (PSO, CMA-ES, Nelder-Mead)
-- Multi-objective optimization
-- Constrained optimization
-- Global optimization techniques
-- Hessian approximation methods
-- Line search and trust region methods
-- Convergence analysis tools
-- Visualization utilities
-
-The implementation follows clean design principles with modular components.
-"""
+"""Global optimization algorithms."""
 
 import numpy as np
-import matplotlib.pyplot as plt
-from typing import Dict, List, Optional, Tuple, Union, Any, Callable
+from typing import Dict, List, Optional, Tuple, Union, Callable
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-import logging
-import urllib.request
-import ssl
-from pathlib import Path
+from scipy.optimize import fsolve
+
+from core import Optimizer, Function, EPSILON
+from core.logging import get_logger
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
-class Function(ABC):
-    """Abstract base class for mathematical functions."""
-    
-    @abstractmethod
-    def __call__(self, x: np.ndarray) -> float:
-        """Evaluate function at x."""
-        pass
-        
-    @abstractmethod
-    def gradient(self, x: np.ndarray) -> np.ndarray:
-        """Compute gradient at x."""
-        pass
-        
-    def hessian(self, x: np.ndarray) -> np.ndarray:
-        """Compute Hessian matrix at x using finite differences."""
-        eps = 1e-8
-        n = len(x)
-        H = np.zeros((n, n))
-        for i in range(n):
-            for j in range(n):
-                x_pp = x.copy()
-                x_pm = x.copy() 
-                x_mp = x.copy()
-                x_mm = x.copy()
-                x_pp[i] += eps; x_pp[j] += eps
-                x_pm[i] += eps; x_pm[j] -= eps
-                x_mp[i] -= eps; x_mp[j] += eps
-                x_mm[i] -= eps; x_mm[j] -= eps
-                H[i,j] = (self(x_pp) - self(x_pm) - self(x_mp) + self(x_mm))/(4*eps*eps)
-        return H
-
-class ParticleSwarmOptimizer:
+class ParticleSwarmOptimizer(Optimizer):
     """Particle Swarm Optimization (PSO) algorithm."""
     
     def __init__(self, n_particles: int = 30, omega: float = 0.7,
                  phi_p: float = 2.0, phi_g: float = 2.0):
+        super().__init__()
         self.n_particles = n_particles
         self.omega = omega  # Inertia weight
         self.phi_p = phi_p  # Personal best weight
@@ -108,11 +60,12 @@ class ParticleSwarmOptimizer:
             
         return g_best_pos, p_best_scores[g_best_idx]
 
-class NelderMead:
+class NelderMead(Optimizer):
     """Nelder-Mead simplex optimization algorithm."""
     
     def __init__(self, alpha: float = 1.0, beta: float = 0.5,
                  gamma: float = 2.0, delta: float = 0.5):
+        super().__init__()
         self.alpha = alpha  # Reflection coefficient
         self.beta = beta   # Contraction coefficient 
         self.gamma = gamma # Expansion coefficient
@@ -181,11 +134,12 @@ class NelderMead:
                 
         return simplex[0], values[0]
 
-class TrustRegionOptimizer:
+class TrustRegionOptimizer(Optimizer):
     """Trust Region optimization with dogleg method."""
     
     def __init__(self, initial_radius: float = 1.0,
                  max_radius: float = 10.0, eta: float = 0.15):
+        super().__init__()
         self.radius = initial_radius
         self.max_radius = max_radius
         self.eta = eta
@@ -219,7 +173,6 @@ class TrustRegionOptimizer:
                             p_tau = p_u + (tau-1)*(p_b - p_u)
                         return np.linalg.norm(p_tau) - self.radius
                     
-                    from scipy.optimize import fsolve
                     tau = fsolve(tau_equation, 1.0)[0]
                     
                     if tau <= 1:

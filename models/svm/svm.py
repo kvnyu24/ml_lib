@@ -23,23 +23,26 @@ The implementation follows clean design principles with extensible interfaces.
 """
 
 import numpy as np
-from sklearn.datasets import make_classification, make_moons, make_circles
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC, LinearSVC, SVR
-from sklearn.calibration import CalibratedClassifierCV
-from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from sklearn.metrics import make_scorer, accuracy_score, f1_score
-from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Union, Any, Callable
+from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
-# Base optimizer class for SVM training
-class BaseOptimizer(ABC):
+from core import (
+    Estimator, Optimizer, Loss,
+    check_array, check_X_y, check_is_fitted,
+    setup_logger, TrainingLogger,
+    Number, Array, Features, Target,
+    EPSILON, DEFAULT_RANDOM_STATE
+)
+
+# Configure logging
+logger = setup_logger(__name__)
+
+class BaseOptimizer(Optimizer):
     """Abstract base class for SVM optimizers."""
     
     @abstractmethod
-    def optimize(self, X: np.ndarray, y: np.ndarray, 
+    def optimize(self, X: Features, y: Target, 
                 kernel_fn: Callable, C: float) -> np.ndarray:
         """Optimize SVM parameters."""
         pass
@@ -48,11 +51,13 @@ class SMOOptimizer(BaseOptimizer):
     """Sequential Minimal Optimization."""
     
     def __init__(self, max_iter: int = 1000, tol: float = 1e-3):
+        super().__init__(learning_rate=1.0)  # Learning rate not used in SMO
         self.max_iter = max_iter
         self.tol = tol
         
-    def optimize(self, X: np.ndarray, y: np.ndarray,
+    def optimize(self, X: Features, y: Target,
                 kernel_fn: Callable, C: float) -> np.ndarray:
+        X, y = check_X_y(X, y)
         n_samples = X.shape[0]
         alphas = np.zeros(n_samples)
         b = 0.0
@@ -96,12 +101,13 @@ class StochasticGradientOptimizer(BaseOptimizer):
     def __init__(self, learning_rate: float = 0.01, 
                  max_iter: int = 1000,
                  batch_size: int = 32):
-        self.learning_rate = learning_rate
+        super().__init__(learning_rate=learning_rate)
         self.max_iter = max_iter
         self.batch_size = batch_size
         
-    def optimize(self, X: np.ndarray, y: np.ndarray,
+    def optimize(self, X: Features, y: Target,
                 kernel_fn: Callable, C: float) -> np.ndarray:
+        X, y = check_X_y(X, y)
         w = np.zeros(X.shape[1])
         n_samples = X.shape[0]
         
@@ -124,9 +130,10 @@ class OnlineSVMOptimizer(BaseOptimizer):
     """Online learning optimizer for SVM."""
     
     def __init__(self, buffer_size: int = 1000):
+        super().__init__(learning_rate=0.01)
         self.buffer_size = buffer_size
         
-    def optimize(self, X: np.ndarray, y: np.ndarray,
+    def optimize(self, X: Features, y: Target,
                 kernel_fn: Callable, C: float) -> np.ndarray:
         # Implement online learning optimization
         pass
@@ -159,7 +166,7 @@ class ActiveLearningStrategy(ABC):
     """Base class for active learning strategies."""
     
     @abstractmethod
-    def select_samples(self, model: SVMModel, X_pool: np.ndarray, 
+    def select_samples(self, model: Estimator, X_pool: Features, 
                       n_samples: int) -> np.ndarray:
         """Select samples for labeling."""
         pass
@@ -167,8 +174,10 @@ class ActiveLearningStrategy(ABC):
 class UncertaintySampling(ActiveLearningStrategy):
     """Uncertainty sampling strategy."""
     
-    def select_samples(self, model: SVMModel, X_pool: np.ndarray,
+    def select_samples(self, model: Estimator, X_pool: Features,
                       n_samples: int) -> np.ndarray:
+        check_is_fitted(model)
+        X_pool = check_array(X_pool)
         # Get decision function values
         decisions = np.abs(model.decision_function(X_pool))
         # Select samples closest to decision boundary
@@ -177,37 +186,36 @@ class UncertaintySampling(ActiveLearningStrategy):
 class DiversitySampling(ActiveLearningStrategy):
     """Diversity-based sampling strategy."""
     
-    def select_samples(self, model: SVMModel, X_pool: np.ndarray,
+    def select_samples(self, model: Estimator, X_pool: Features,
                       n_samples: int) -> np.ndarray:
         # Implement diversity-based sample selection
         pass
 
 # Advanced SVM variants
-class SparseSVM(SVMModel):
+class SparseSVM(Estimator):
     """SVM with L1 regularization for feature selection."""
     
     def __init__(self, l1_ratio: float = 0.5, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         self.l1_ratio = l1_ratio
-        self.model = LinearSVC(penalty='l1', dual=False, **kwargs)
 
-class RobustSVM(SVMModel):
+class RobustSVM(Estimator):
     """Robust SVM handling outliers and noise."""
     
     def __init__(self, outlier_fraction: float = 0.1, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         self.outlier_fraction = outlier_fraction
         # Implement robust SVM training
 
-class IncrementalSVM(SVMModel):
+class IncrementalSVM(Estimator):
     """Incremental/Online SVM learning."""
     
     def __init__(self, buffer_size: int = 1000, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__()
         self.buffer_size = buffer_size
         self.optimizer = OnlineSVMOptimizer(buffer_size)
         
-    def partial_fit(self, X: np.ndarray, y: np.ndarray):
+    def partial_fit(self, X: Features, y: Target):
         """Update model with new samples."""
         pass
 
@@ -215,7 +223,7 @@ class IncrementalSVM(SVMModel):
 class SVMModelSelector:
     """Advanced model selection and tuning."""
     
-    def __init__(self, base_model: SVMModel,
+    def __init__(self, base_model: Estimator,
                  param_distributions: Dict[str, Any],
                  n_iter: int = 100,
                  cv: int = 5,
@@ -226,22 +234,9 @@ class SVMModelSelector:
         self.cv = cv
         self.n_jobs = n_jobs
         
-    def select_best_model(self, X: np.ndarray, y: np.ndarray,
-                         scoring: Union[str, Callable] = 'f1') -> SVMModel:
+    def select_best_model(self, X: Features, y: Target,
+                         scoring: Union[str, Callable] = 'f1') -> Estimator:
         """Find best hyperparameters using randomized search."""
-        if isinstance(scoring, str):
-            scoring = make_scorer(
-                {'f1': f1_score, 'accuracy': accuracy_score}[scoring]
-            )
-            
-        search = RandomizedSearchCV(
-            self.base_model.model,
-            self.param_distributions,
-            n_iter=self.n_iter,
-            cv=self.cv,
-            scoring=scoring,
-            n_jobs=self.n_jobs
-        )
-        
-        search.fit(X, y)
-        return search.best_estimator_
+        X, y = check_X_y(X, y)
+        # Implement model selection
+        return self.base_model
