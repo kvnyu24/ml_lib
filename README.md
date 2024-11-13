@@ -1,6 +1,6 @@
 # ML Library
 
-A comprehensive machine learning library implementing various algorithms, preprocessing techniques, and utilities for data science and machine learning tasks. This library is implemented from scratch with help of LLMs to help myself better understand the inner workings of machine learning models.
+A comprehensive machine learning library implementing various algorithms, preprocessing techniques, and utilities for data science and machine learning tasks. This library is implemented from scratch with help of LLMs to help everyone better understand the inner workings of machine learning models. Feel free to fork and contribute! Will gradually add more models, features, and utilities, as well as documentation and examples.
 
 ## 🌟 Features
 
