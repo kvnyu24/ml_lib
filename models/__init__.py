@@ -22,48 +22,46 @@ from .neural import (
 )
 
 from .linear import (
-    LinearRegression,
-    LogisticRegression,
-    RidgeRegression,
-    LassoRegression,
-    ElasticNet  # Added ElasticNet
+    ElasticNetRegression,
+    ElasticNetLoss  # Added ElasticNet
 )
 
 from .svm import (
+    SVMModelSelector,
     SVM,
-    SVR,
-    LinearSVM,
-    KernelSVM  # Added KernelSVM
+    AdvancedKernels,
+    SparseSVM,
+    RobustSVM,
+    IncrementalSVM,
+    UncertaintySampling,
+    DiversitySampling
+
 )
 
 from .trees import (
-    DecisionTree,
-    RandomForest,
-    ExtraTreesClassifier,
-    GradientBoostedTrees  # Added GradientBoostedTrees
+    DecisionTreeClassifier,
+    RandomForestClassifier,
 )
 
 from .ensemble import (
-    BaggingClassifier,
-    BaggingRegressor,
-    AdaBoost,
-    GradientBoosting,
-    StackingClassifier,  # Added StackingClassifier
-    VotingClassifier  # Added VotingClassifier
+    BaseBooster,
+    GradientBoostingRegressor,
+    XGBoostRegressor,
+    LightGBMRegressor
+
 )
 
 from .neighbors import (
     KNeighborsClassifier,
     KNeighborsRegressor,
-    RadiusNeighborsClassifier,
-    NearestCentroid
+    AdaptiveKNN,
+    LocallyWeightedRegressor,
+    VoronoiClassifier,
+    PrototypeSelector
 )
 
 from .topic import (
     LatentDirichletAllocation,
-    NMF,
-    LSA,
-    PLSA
 )
 
 from .experimental import (
@@ -79,71 +77,82 @@ from .classification import (
     SoftmaxClassifier,
     SVMClassifier,
     EnsembleClassifier,
-
 )
 
-__all__ = [
-    # Neural Networks
-    'MLP',
-    'Conv2D', 
-    'ResidualBlock',
-    'BatchNormalization',
-    'GlobalAveragePooling2D',
-    'MaxPool2D',
-    'Dense',
-    'Dropout',
-    'Flatten',
-    'ResNet',  # Added ResNet
+from .spectral import (
+    BaseFourierModel,
+    AdaptiveFourierModel,
+    SpectralDESolver,
+    SpectralKernel,
+    TimeFrequencyAnalyzer
+)
 
-    # Linear Models
+# Explicitly list exports from each submodule
+__all__ = [
+    # Neural networks
+    'NeuralNetwork',
+    'CNN',
+    'RNN',
+    'LSTM',
+    'Transformer',
+    
+    # Linear models
     'LinearRegression',
     'LogisticRegression',
-    'RidgeRegression', 
+    'RidgeRegression',
     'LassoRegression',
-    'ElasticNet',  # Added ElasticNet
-
-    # Support Vector Machines
+    
+    # SVM models
     'SVM',
-    'SVR', 
-    'LinearSVM',
-    'KernelSVM',  # Added KernelSVM
+    'AdvancedKernels', 
+    'SparseSVM',
+    'RobustSVM',
+    'IncrementalSVM',
+    'UncertaintySampling',
+    'DiversitySampling',
+    'SVMModelSelector',
+    
+    # Tree models
+    'DecisionTreeClassifier',
+    'RandomForestClassifier', 
 
-    # Decision Trees
-    'DecisionTree',
-    'RandomForest',
-    'ExtraTreesClassifier',
-    'GradientBoostedTrees',  # Added GradientBoostedTrees
+    
+    # Ensemble models
+    'BaseBooster',
+    'GradientBoostingRegressor',
+    'XGBoostRegressor',
+    'LightGBMRegressor',
 
-    # Ensemble Methods
-    'BaggingClassifier',
-    'BaggingRegressor',
-    'AdaBoost',
-    'GradientBoosting',
-    'StackingClassifier',  # Added StackingClassifier
-    'VotingClassifier',  # Added VotingClassifier
-
+    
     # Neighbors
     'KNeighborsClassifier',
     'KNeighborsRegressor', 
-    'RadiusNeighborsClassifier',
-    'NearestCentroid',
+    'AdaptiveKNN',
+    'LocallyWeightedRegressor',
+    'VoronoiClassifier',
+    'PrototypeSelector',
 
-    # Topic Models
+    
+    # Topic models
     'LatentDirichletAllocation',
-    'NMF',
-    'LSA',
-    'PLSA',
 
-    # Experimental Models
+    # Spectral models
+    'BaseFourierModel',
+    'AdaptiveFourierModel',
+    'SpectralDESolver',
+    'SpectralKernel',
+    'TimeFrequencyAnalyzer',
+    
+    # Experimental models
     'QuantumNeuralNetwork',
     'CapsuleNetwork',
     'GraphNeuralNetwork',
     'AutoML',
-
-    # Classification Models
+    
+    # Classification
     'LDA',
     'BaseClassifier',
-    'SoftmaxClassifier',
+    'SoftmaxClassifier', 
     'SVMClassifier',
-    'EnsembleClassifier',
+    'EnsembleClassifier'
 ]

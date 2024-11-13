@@ -1,56 +1,29 @@
 """Optimization algorithms and solvers."""
 
 from .optimizers import (
-    BaseOptimizer,
-    AdamOptimizer,
-    RMSpropOptimizer,
-    PSO,
-    CMAESOptimizer,
-    NelderMead,
-    MultiObjectiveOptimizer
-)
-
-from .gradient import (
-    GradientDescent,
-    StochasticGradientDescent,
-    MomentumOptimizer,
-    AdaGrad,
+    SGD,
+    Adam,
     RMSprop,
-    Adam
-)
-
-from .global_opt import (
+    Momentum,
+    Adagrad,
+    Adamax,
+    Nadam,
     ParticleSwarmOptimizer,
-    EvolutionaryOptimizer,
-    SimulatedAnnealing,
-    BayesianOptimizer
+    TrustRegionOptimizer,
+    LionOptimizer,
+    NelderMead
 )
 
 __all__ = [
-    # Base classes
-    'BaseOptimizer',
-    
-    # Standard optimizers
-    'AdamOptimizer',
-    'RMSpropOptimizer',
-    
-    # Global optimization
-    'PSO',
-    'CMAESOptimizer',
-    'NelderMead',
-    'MultiObjectiveOptimizer',
-    
-    # Gradient-based
-    'GradientDescent',
-    'StochasticGradientDescent',
-    'MomentumOptimizer',
-    'AdaGrad',
-    'RMSprop',
+    'SGD',
     'Adam',
-    
-    # Global optimization
+    'RMSprop', 
+    'Momentum',
+    'Adagrad',
+    'Adamax',
+    'Nadam',
     'ParticleSwarmOptimizer',
-    'EvolutionaryOptimizer',
-    'SimulatedAnnealing',
-    'BayesianOptimizer'
-] 
+    'TrustRegionOptimizer',
+    'LionOptimizer',
+    'NelderMead'
+]

@@ -1,11 +1,12 @@
 """Support Vector Machine implementations."""
 
 from .svm import (
+    SVMModelSelector,
     SVM,
     AdvancedKernels,
-    ActiveLearningStrategy,
     SparseSVM,
     RobustSVM,
+    IncrementalSVM,
     UncertaintySampling,
     DiversitySampling
 )
@@ -13,9 +14,10 @@ from .svm import (
 __all__ = [
     'SVM',
     'AdvancedKernels',
-    'ActiveLearningStrategy',
     'SparseSVM',
     'RobustSVM',
+    'IncrementalSVM',
     'UncertaintySampling',
-    'DiversitySampling'
+    'DiversitySampling',
+    'SVMModelSelector'
 ] 

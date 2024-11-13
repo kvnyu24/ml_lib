@@ -1,17 +1,22 @@
-"""Spectral and Fourier analysis models."""
+"""Spectral models package
+
+This package contains spectral analysis and Fourier-based models including:
+- Fourier series models with adaptive frequency selection
+- Spectral differential equation solvers
+"""
 
 from .fourier import (
-    Dataset,
     BaseFourierModel,
     AdaptiveFourierModel,
+    SpectralKernel,
     TimeFrequencyAnalyzer,
-    ParametricSolver
+    SpectralDESolver
 )
 
 __all__ = [
-    'Dataset',
     'BaseFourierModel',
-    'AdaptiveFourierModel',
+    'AdaptiveFourierModel', 
+    'SpectralKernel',
     'TimeFrequencyAnalyzer',
-    'ParametricSolver'
-] 
+    'SpectralDESolver'
+]

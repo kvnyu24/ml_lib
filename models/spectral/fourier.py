@@ -32,21 +32,15 @@ from core import (
     Number,
     Array,
     Features,
-    Target
+    Target,
+    Dataset
 )
-
-@dataclass
-class Dataset:
-    """Container for dataset."""
-    x: np.ndarray
-    y: np.ndarray
-    freq_domain: Optional[np.ndarray] = None
 
 class BaseFourierModel(Estimator):
     """Abstract base class for Fourier series models."""
     
     @abstractmethod
-    def fit(self, x: np.ndarray, y: np.ndarray) -> None:
+    def fit(self, dataset: Dataset) -> None:
         """Fit model to data."""
         pass
         
@@ -86,7 +80,8 @@ class AdaptiveFourierModel(BaseFourierModel):
         reg_term = self.alpha * np.sum(np.abs(amplitudes))
         return np.mean((y - y_pred)**2) + reg_term
         
-    def fit(self, x: np.ndarray, y: np.ndarray) -> None:
+    def fit(self, dataset: Dataset) -> None:
+        x, y = dataset.features, dataset.target
         x, y = check_X_y(x, y)
         self._initialize_frequencies(len(x))
         
@@ -134,9 +129,9 @@ class FourierFeatureLearner(Transformer):
         self.n_components = n_components
         self.feature_frequencies = None
         
-    def fit_transform(self, X: np.ndarray) -> np.ndarray:
+    def fit_transform(self, dataset: Dataset) -> np.ndarray:
         """Learn and transform to Fourier features."""
-        X = check_array(X)
+        X = check_array(dataset.features)
         
         # Compute frequency components
         freqs = fftpack.fftfreq(len(X))

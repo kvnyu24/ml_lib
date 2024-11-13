@@ -14,6 +14,18 @@ def _validate_inputs(y_true: np.ndarray, y_pred: np.ndarray) -> None:
     if len(y_true) == 0:
         raise ValueError("Empty arrays are not supported")
 
+def euclidean_distance(x1: np.ndarray, x2: np.ndarray) -> float:
+    """Compute Euclidean distance between two points/vectors.
+    
+    Args:
+        x1: First point/vector
+        x2: Second point/vector
+        
+    Returns:
+        Euclidean distance between x1 and x2
+    """
+    return np.sqrt(np.sum((x1 - x2) ** 2))
+
 class Metric:
     """Base class for metrics."""
     
@@ -219,5 +231,6 @@ __all__ = [
     'GiniImpurity',
     'MisclassificationError',
     'information_gain',
-    'gain_ratio'
+    'gain_ratio',
+    'euclidean_distance'
 ]

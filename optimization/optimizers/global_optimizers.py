@@ -8,7 +8,6 @@ from scipy.optimize import fsolve
 
 from core import (
     Optimizer,
-    Function,
     EPSILON,
     get_logger
 )
@@ -27,7 +26,7 @@ class ParticleSwarmOptimizer(Optimizer):
         self.phi_p = phi_p  # Personal best weight
         self.phi_g = phi_g  # Global best weight
         
-    def minimize(self, func: Function, bounds: np.ndarray, 
+    def minimize(self, func: Callable[[np.ndarray], float], bounds: np.ndarray, 
                 max_iter: int = 100) -> Tuple[np.ndarray, float]:
         dim = len(bounds)
         # Initialize particles and velocities
@@ -75,7 +74,7 @@ class NelderMead(Optimizer):
         self.gamma = gamma # Expansion coefficient
         self.delta = delta # Shrink coefficient
         
-    def minimize(self, func: Function, x0: np.ndarray, 
+    def minimize(self, func: Callable[[np.ndarray], float], x0: np.ndarray, 
                 max_iter: int = 1000, tol: float = 1e-8) -> Tuple[np.ndarray, float]:
         n = len(x0)
         # Initialize simplex
@@ -148,7 +147,9 @@ class TrustRegionOptimizer(Optimizer):
         self.max_radius = max_radius
         self.eta = eta
         
-    def minimize(self, func: Function, x0: np.ndarray,
+    def minimize(self, func: Callable[[np.ndarray], float], x0: np.ndarray,
+                gradient: Callable[[np.ndarray], np.ndarray],
+                hessian: Callable[[np.ndarray], np.ndarray],
                 max_iter: int = 100, tol: float = 1e-8) -> Tuple[np.ndarray, float]:
         x = x0.copy()
         n = len(x)
@@ -156,8 +157,8 @@ class TrustRegionOptimizer(Optimizer):
         
         for _ in range(max_iter):
             f = func(x)
-            g = func.gradient(x)
-            H = func.hessian(x)
+            g = gradient(x)
+            H = hessian(x)
             
             # Solve trust region subproblem using dogleg method
             try:

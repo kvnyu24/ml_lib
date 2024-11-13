@@ -5,7 +5,6 @@ Linear Regression and Optimization Library
 A comprehensive library for linear regression and optimization:
 
 - Multiple regression algorithms (OLS, Ridge, Lasso, Elastic Net)
-- Advanced optimization methods (SGD, Adam, RMSprop, Momentum)
 - Regularization techniques
 - Feature engineering and selection
 - Cross-validation and model selection
@@ -30,8 +29,8 @@ from core import (
     EPSILON, DEFAULT_RANDOM_STATE
 )
 
-from optimization.optimizers import AdamOptimizer, RMSpropOptimizer
-from evaluation import ModelEvaluator
+from optimization.optimizers import Adam, RMSprop
+from ..evaluation import ModelEvaluator
 
 # Configure logging
 logger = get_logger(__name__)
@@ -61,12 +60,12 @@ class ElasticNetRegression(Estimator):
     def __init__(self,
                  alpha: float = 1.0,
                  l1_ratio: float = 0.5,
-                 optimizer: Optional[AdamOptimizer] = None,
+                 optimizer: Optional[Adam] = None,
                  fit_intercept: bool = True):
         super().__init__()
         self.alpha = alpha
         self.l1_ratio = l1_ratio
-        self.optimizer = optimizer or AdamOptimizer()
+        self.optimizer = optimizer or Adam()
         self.fit_intercept = fit_intercept
         self.loss = ElasticNetLoss(alpha=alpha, l1_ratio=l1_ratio)
         

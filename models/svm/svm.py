@@ -138,6 +138,118 @@ class OnlineSVMOptimizer(BaseOptimizer):
         # Implement online learning optimization
         pass
 
+class SVM(Estimator):
+    """Support Vector Machine classifier.
+    
+    Parameters
+    ----------
+    C : float, default=1.0
+        Regularization parameter
+    kernel : {'linear', 'rbf', 'poly', 'sigmoid'} or callable, default='rbf'
+        Kernel function
+    degree : int, default=3
+        Degree for poly kernel
+    gamma : float, default='scale'
+        Kernel coefficient for rbf, poly and sigmoid kernels
+    coef0 : float, default=0.0
+        Independent term in poly/sigmoid kernels
+    tol : float, default=1e-3
+        Tolerance for stopping criterion
+    max_iter : int, default=1000
+        Maximum number of iterations
+    optimizer : {'smo', 'sgd'}, default='smo'
+        Optimization algorithm to use
+    random_state : int, default=None
+        Random number generator seed
+    """
+    
+    def __init__(
+        self,
+        C: float = 1.0,
+        kernel: Union[str, Callable] = 'rbf',
+        degree: int = 3,
+        gamma: Union[str, float] = 'scale',
+        coef0: float = 0.0,
+        tol: float = 1e-3,
+        max_iter: int = 1000,
+        optimizer: str = 'smo',
+        random_state: Optional[int] = None
+    ):
+        super().__init__()
+        self.C = C
+        self.kernel = kernel
+        self.degree = degree
+        self.gamma = gamma
+        self.coef0 = coef0
+        self.tol = tol
+        self.max_iter = max_iter
+        self.optimizer = optimizer
+        self.random_state = random_state
+        
+        # Initialize optimizer
+        if optimizer == 'smo':
+            self._optimizer = SMOOptimizer(max_iter=max_iter, tol=tol)
+        elif optimizer == 'sgd':
+            self._optimizer = StochasticGradientOptimizer(max_iter=max_iter)
+        else:
+            raise ValueError(f"Unknown optimizer: {optimizer}")
+            
+        # Initialize kernel function
+        self._init_kernel()
+        
+    def _init_kernel(self):
+        """Initialize the kernel function."""
+        if callable(self.kernel):
+            self._kernel_fn = self.kernel
+        elif self.kernel == 'linear':
+            self._kernel_fn = lambda X, Y: X @ Y.T
+        elif self.kernel == 'rbf':
+            if self.gamma == 'scale':
+                self.gamma_ = 1.0  # Will be set in fit
+            else:
+                self.gamma_ = self.gamma
+            self._kernel_fn = lambda X, Y: np.exp(-self.gamma_ * 
+                np.sum((X[:, None] - Y) ** 2, axis=2))
+        elif self.kernel == 'poly':
+            self._kernel_fn = lambda X, Y: (self.gamma * (X @ Y.T) + 
+                self.coef0) ** self.degree
+        elif self.kernel == 'sigmoid':
+            self._kernel_fn = lambda X, Y: np.tanh(self.gamma * 
+                (X @ Y.T) + self.coef0)
+        else:
+            raise ValueError(f"Unknown kernel: {self.kernel}")
+            
+    def fit(self, X: Features, y: Target) -> 'SVM':
+        """Fit the SVM model."""
+        X, y = check_X_y(X, y)
+        
+        # Set gamma if 'scale'
+        if self.kernel == 'rbf' and self.gamma == 'scale':
+            self.gamma_ = 1.0 / (X.shape[1] * X.var())
+            self._init_kernel()
+            
+        # Optimize parameters
+        self.support_vectors_ = self._optimizer.optimize(
+            X, y, self._kernel_fn, self.C)
+            
+        return self
+        
+    def predict(self, X: Features) -> Target:
+        """Predict class labels for samples in X."""
+        check_is_fitted(self)
+        X = check_array(X)
+        
+        # Compute decision function
+        decision = self.decision_function(X)
+        return np.sign(decision)
+        
+    def decision_function(self, X: Features) -> np.ndarray:
+        """Compute decision function."""
+        check_is_fitted(self)
+        X = check_array(X)
+        
+        return self._kernel_fn(X, self.support_vectors_)
+
 # Advanced kernel implementations
 class AdvancedKernels:
     """Collection of advanced kernel functions."""

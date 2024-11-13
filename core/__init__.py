@@ -12,7 +12,7 @@ from .callbacks import Callback, EarlyStopping, ModelCheckpoint
 from .logging import get_logger, TrainingLogger
 from .metrics import (
     Metric, Accuracy, MSE, MAE,
-    get_metric, MetricList
+    get_metric, MetricList, R2Score, ImpurityMetric, Entropy, GiniImpurity, information_gain, gain_ratio, euclidean_distance    
 )
 from .dtypes import (
     Number, Array, Features, Target,
@@ -20,6 +20,7 @@ from .dtypes import (
     SUPPORTED_OPTIMIZERS, SUPPORTED_ACTIVATIONS, SUPPORTED_LOSSES,
     DEFAULT_OPTIMIZER_CONFIG, DEFAULT_TRAINING_CONFIG
 )
+from .data import Dataset, train_test_split, mutual_information, _mutual_info_feature, load_dataset, save_dataset
 
 __all__ = [
     # Base classes
@@ -51,4 +52,8 @@ __all__ = [
     'EPSILON', 'DEFAULT_RANDOM_STATE',
     'SUPPORTED_OPTIMIZERS', 'SUPPORTED_ACTIVATIONS', 'SUPPORTED_LOSSES',
     'DEFAULT_OPTIMIZER_CONFIG', 'DEFAULT_TRAINING_CONFIG'
+
+
+    # Data
+    'Dataset', 'train_test_split', 'train_val_test_split', 'mutual_information', '_mutual_info_feature', 'load_dataset', 'save_dataset'
 ]
