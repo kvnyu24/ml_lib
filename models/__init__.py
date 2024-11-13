@@ -1,89 +1,149 @@
-"""Model implementations."""
+"""Models Package
 
-# Classification models
-from .classification import (
-    BaseClassifier,
-    SoftmaxClassifier,
-    SVMClassifier,
-    EnsembleClassifier
-)
+This package contains various machine learning models including:
+- Neural network architectures (MLP, CNN, ResNet)
+- Linear models (LinearRegression, LogisticRegression) 
+- Support vector machines (SVM, SVR)
+- Decision trees and random forests (DecisionTree, RandomForest)
+- Ensemble methods (Bagging, Boosting)
+"""
 
-# Tree-based models
-from .trees import (
-    DecisionTreeClassifier,
-    RandomForestClassifier
-)
-
-# SVM models
-from .svm import (
-    IncrementalSVM,
-    SVMModelSelector
+from .neural import (
+    MLP,
+    Conv2D,
+    ResidualBlock,
+    BatchNormalization,
+    GlobalAveragePooling2D, 
+    MaxPool2D,
+    Dense,
+    Dropout,
+    Flatten,
+    ResNet  # Added ResNet
 )
 
 from .linear import (
-    ElasticNetRegression,
-    ElasticNetLoss
+    LinearRegression,
+    LogisticRegression,
+    RidgeRegression,
+    LassoRegression,
+    ElasticNet  # Added ElasticNet
 )
 
-
-# Advanced learning models
-from .experimental import (
-    ActiveLearner,
-    MetaLearner,
-    TransferLearner,
-    AutoML,
-    NeuralODE
+from .svm import (
+    SVM,
+    SVR,
+    LinearSVM,
+    KernelSVM  # Added KernelSVM
 )
 
-from .topic import (
-    LatentDirichletAllocation
+from .trees import (
+    DecisionTree,
+    RandomForest,
+    ExtraTreesClassifier,
+    GradientBoostedTrees  # Added GradientBoostedTrees
 )
 
 from .ensemble import (
-    GradientBoostingRegressor,
-    XGBoostRegressor,
-    LightGBMRegressor
+    BaggingClassifier,
+    BaggingRegressor,
+    AdaBoost,
+    GradientBoosting,
+    StackingClassifier,  # Added StackingClassifier
+    VotingClassifier  # Added VotingClassifier
 )
 
-# Evaluation utilities
-from .evaluation import (
-    ModelEvaluator,
-    ModelSelector
+from .neighbors import (
+    KNeighborsClassifier,
+    KNeighborsRegressor,
+    RadiusNeighborsClassifier,
+    NearestCentroid
+)
+
+from .topic import (
+    LatentDirichletAllocation,
+    NMF,
+    LSA,
+    PLSA
+)
+
+from .experimental import (
+    QuantumNeuralNetwork,
+    CapsuleNetwork,
+    GraphNeuralNetwork,
+    AutoML
+)
+
+from .classification import (
+    LDA,
+    BaseClassifier,
+    SoftmaxClassifier,
+    SVMClassifier,
+    EnsembleClassifier,
+
 )
 
 __all__ = [
-    # Classification
+    # Neural Networks
+    'MLP',
+    'Conv2D', 
+    'ResidualBlock',
+    'BatchNormalization',
+    'GlobalAveragePooling2D',
+    'MaxPool2D',
+    'Dense',
+    'Dropout',
+    'Flatten',
+    'ResNet',  # Added ResNet
+
+    # Linear Models
+    'LinearRegression',
+    'LogisticRegression',
+    'RidgeRegression', 
+    'LassoRegression',
+    'ElasticNet',  # Added ElasticNet
+
+    # Support Vector Machines
+    'SVM',
+    'SVR', 
+    'LinearSVM',
+    'KernelSVM',  # Added KernelSVM
+
+    # Decision Trees
+    'DecisionTree',
+    'RandomForest',
+    'ExtraTreesClassifier',
+    'GradientBoostedTrees',  # Added GradientBoostedTrees
+
+    # Ensemble Methods
+    'BaggingClassifier',
+    'BaggingRegressor',
+    'AdaBoost',
+    'GradientBoosting',
+    'StackingClassifier',  # Added StackingClassifier
+    'VotingClassifier',  # Added VotingClassifier
+
+    # Neighbors
+    'KNeighborsClassifier',
+    'KNeighborsRegressor', 
+    'RadiusNeighborsClassifier',
+    'NearestCentroid',
+
+    # Topic Models
+    'LatentDirichletAllocation',
+    'NMF',
+    'LSA',
+    'PLSA',
+
+    # Experimental Models
+    'QuantumNeuralNetwork',
+    'CapsuleNetwork',
+    'GraphNeuralNetwork',
+    'AutoML',
+
+    # Classification Models
+    'LDA',
     'BaseClassifier',
     'SoftmaxClassifier',
     'SVMClassifier',
     'EnsembleClassifier',
-
-    # Linear models
-    'ElasticNetRegression',
-    'ElasticNetLoss',
-    
-    # Trees
-    'DecisionTreeClassifier',
-    'RandomForestClassifier',
-    
-    # SVM
-    'IncrementalSVM',
-    'SVMModelSelector',
-    
-    # Advanced Learning
-    'MetaLearner',
-    'TransferLearner',
-    'AutoML',
-    'NeuralODE',
-    'ActiveLearner',
-    'GradientBoostingRegressor',
-    'XGBoostRegressor',
-    'LightGBMRegressor',
-
-    # Topic modeling
-    'LatentDirichletAllocation',
-
-    # Evaluation
-    'ModelEvaluator',
-    'ModelSelector'
-] 
+]
