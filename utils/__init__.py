@@ -1,6 +1,6 @@
 """Utility functions and classes."""
 
-from .utils import (
+from . import (
     ActiveLearner,
     TransferLearner,
     MetaLearner,
