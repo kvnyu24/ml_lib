@@ -1,7 +1,7 @@
 """Audio preprocessing utilities."""
 
 import numpy as np
-from typing import Optional, Dict, Union
+from typing import Optional, Dict, Union, List
 from core import Transformer
 import librosa
 
@@ -95,4 +95,4 @@ class AudioFeatureExtractor(Transformer):
                 for v in features_dict.values()
             ]))
             
-        return np.array(features_list) 
+        return np.array(features_list)

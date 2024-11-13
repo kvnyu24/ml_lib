@@ -249,6 +249,41 @@ class MLP(Estimator):
                     layer.m = {k: np.zeros_like(v) for k,v in layer.get_params().items()}
                     layer.v = {k: np.zeros_like(v) for k,v in layer.get_params().items()}
 
+    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'MLP':
+        """Fit the neural network to training data.
+        
+        Args:
+            X: Training features
+            y: Target values
+            
+        Returns:
+            self: The fitted model
+        """
+        X, y = check_X_y(X, y)
+        self._input_dim = X.shape[1]
+        self._output_dim = y.shape[1] if len(y.shape) > 1 else 1
+        
+        # Training loop would go here...
+        
+        self._is_fitted = True
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Make predictions on new data.
+        
+        Args:
+            X: Features to predict on
+            
+        Returns:
+            Model predictions
+        """
+        check_is_fitted(self)
+        X = check_array(X)
+        if X.shape[1] != self._input_dim:
+            raise ValueError(f"Expected {self._input_dim} features, got {X.shape[1]}")
+            
+        return self.forward(X)
+
     def forward(self, x: np.ndarray, y: Optional[np.ndarray] = None) -> Union[float, np.ndarray]:
         """Forward pass through the network."""
         self.activations = []

@@ -52,10 +52,10 @@ from .time_series import (
     SeasonalDecomposer
 )
 
-from .image import (
-    ImagePreprocessor,
-    ImageFeatureExtractor
-)
+# from .image import (
+#     ImagePreprocessor,
+#     ImageFeatureExtractor
+# )
 
 from .audio import (
     AudioPreprocessor,
@@ -119,8 +119,8 @@ __all__ = [
     'SeasonalDecomposer',
     
     # Image Processing
-    'ImagePreprocessor',
-    'ImageFeatureExtractor',
+    # 'ImagePreprocessor',
+    # 'ImageFeatureExtractor',
     
     # Audio Processing
     'AudioPreprocessor',

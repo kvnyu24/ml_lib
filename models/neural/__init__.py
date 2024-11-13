@@ -1,6 +1,6 @@
 """Neural network implementations."""
 
-from .mlp import MLP
+from .mlp import MLP, AffineLayer, CrossEntropyLoss
 from .layers import Dense, BatchNormalization, MaxPool2D, GlobalAveragePooling2D, Dropout, Flatten
 from .activations import Activation
 from .losses import MSELoss, CrossEntropyLoss
@@ -11,6 +11,8 @@ from .gnn import GraphConvolution
 from .resnet import ResidualBlock, ResNet
 __all__ = [
     'MLP',
+    'AffineLayer',
+    'CrossEntropyLoss',
     'Dense',
     'BatchNormalization',
     'MaxPool2D',
