@@ -1,27 +1,28 @@
 """Common neural network layers implementation."""
 
 import numpy as np
-from typing import Optional, Union, Tuple, Callable
+from typing import Optional, Union, Tuple, Callable, Dict
 from core import Layer, EPSILON
+
 class Dense(Layer):
     """Fully connected layer."""
     
     def __init__(self,
+                 input_dim: int,
                  units: int,
                  activation: Optional[str] = None,
                  use_bias: bool = True,
                  kernel_initializer: str = 'glorot_uniform'):
         super().__init__()
+        self.input_dim = input_dim
         self.units = units
         self.activation = activation
         self.use_bias = use_bias
         self.kernel_initializer = kernel_initializer
+        self.trainable = True
         
-        # Will be initialized during build
-        self.W = None
-        self.b = None
-        self.x = None
-        self.z = None
+        # Initialize parameters
+        self.build((None, input_dim))
         
     def build(self, input_shape: tuple) -> None:
         """Initialize layer parameters."""
@@ -38,11 +39,21 @@ class Dense(Layer):
         if self.use_bias:
             self.b = np.zeros(self.units)
             
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def get_params(self) -> Dict[str, np.ndarray]:
+        """Get trainable parameters."""
+        params = {'W': self.W}
+        if self.use_bias:
+            params['b'] = self.b
+        return params
+        
+    def set_params(self, params: Dict[str, np.ndarray]) -> None:
+        """Set layer parameters."""
+        self.W = params['W']
+        if self.use_bias:
+            self.b = params['b']
+        
+    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         """Forward pass computation."""
-        if not hasattr(self, 'W'):
-            self.build(x.shape)
-            
         self.x = x
         self.z = x @ self.W
         if self.use_bias:
@@ -84,6 +95,16 @@ class Dropout(Layer):
             raise ValueError("Dropout rate must be between 0 and 1")
         self.rate = rate
         self.mask = None
+        self.trainable = False
+        
+    def get_params(self) -> Dict[str, np.ndarray]:
+        """Get trainable parameters."""
+        return {'rate': np.array([self.rate])}
+        
+    def set_params(self, params: Dict[str, np.ndarray]) -> None:
+        """Set layer parameters."""
+        if 'rate' in params:
+            self.rate = float(params['rate'][0])
         
     def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         """Forward pass with dropout."""
@@ -102,7 +123,20 @@ class Dropout(Layer):
 class Flatten(Layer):
     """Flattens input while preserving batch size."""
     
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def __init__(self):
+        super().__init__()
+        self.trainable = False
+    
+    def get_params(self) -> Dict[str, np.ndarray]:
+        """Get trainable parameters."""
+        return {'trainable': np.array([self.trainable])}
+        
+    def set_params(self, params: Dict[str, np.ndarray]) -> None:
+        """Set layer parameters."""
+        if 'trainable' in params:
+            self.trainable = bool(params['trainable'][0])
+        
+    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         """Flatten input tensor."""
         self.input_shape = x.shape
         return x.reshape(x.shape[0], -1)
@@ -120,8 +154,23 @@ class MaxPool2D(Layer):
         self.pool_size = pool_size if isinstance(pool_size, tuple) else (pool_size, pool_size)
         self.strides = strides if strides is not None else self.pool_size
         self.strides = self.strides if isinstance(self.strides, tuple) else (self.strides, self.strides)
+        self.trainable = False
         
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def get_params(self) -> Dict[str, np.ndarray]:
+        """Get trainable parameters."""
+        return {
+            'pool_size': np.array(self.pool_size),
+            'strides': np.array(self.strides)
+        }
+        
+    def set_params(self, params: Dict[str, np.ndarray]) -> None:
+        """Set layer parameters."""
+        if 'pool_size' in params:
+            self.pool_size = tuple(params['pool_size'])
+        if 'strides' in params:
+            self.strides = tuple(params['strides'])
+        
+    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         """Forward pass with max pooling."""
         self.x = x
         batch_size, height, width, channels = x.shape
@@ -175,7 +224,20 @@ class MaxPool2D(Layer):
 class GlobalAveragePooling2D(Layer):
     """Global Average Pooling 2D layer."""
     
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def __init__(self):
+        super().__init__()
+        self.trainable = False
+    
+    def get_params(self) -> Dict[str, np.ndarray]:
+        """Get trainable parameters."""
+        return {'trainable': np.array([self.trainable])}
+        
+    def set_params(self, params: Dict[str, np.ndarray]) -> None:
+        """Set layer parameters."""
+        if 'trainable' in params:
+            self.trainable = bool(params['trainable'][0])
+        
+    def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         """Forward pass with global average pooling."""
         self.input_shape = x.shape
         return np.mean(x, axis=(1, 2))
@@ -194,6 +256,7 @@ class BatchNormalization(Layer):
         self.num_features = num_features
         self.eps = eps
         self.momentum = momentum
+        self.trainable = True
         
         # Learnable parameters
         self.gamma = np.ones(num_features)
@@ -202,6 +265,32 @@ class BatchNormalization(Layer):
         # Running statistics
         self.running_mean = np.zeros(num_features)
         self.running_var = np.ones(num_features)
+        
+    def get_params(self) -> Dict[str, np.ndarray]:
+        """Get trainable parameters."""
+        return {
+            'gamma': self.gamma,
+            'beta': self.beta,
+            'running_mean': self.running_mean,
+            'running_var': self.running_var,
+            'eps': np.array([self.eps]),
+            'momentum': np.array([self.momentum])
+        }
+        
+    def set_params(self, params: Dict[str, np.ndarray]) -> None:
+        """Set layer parameters."""
+        if 'gamma' in params:
+            self.gamma = params['gamma']
+        if 'beta' in params:
+            self.beta = params['beta']
+        if 'running_mean' in params:
+            self.running_mean = params['running_mean']
+        if 'running_var' in params:
+            self.running_var = params['running_var']
+        if 'eps' in params:
+            self.eps = float(params['eps'][0])
+        if 'momentum' in params:
+            self.momentum = float(params['momentum'][0])
         
     def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         self.x = x

@@ -2,6 +2,7 @@
 
 import numpy as np
 from core import Layer, EPSILON
+from typing import Dict
 
 class ReLU(Layer):
     """ReLU activation layer."""
@@ -15,6 +16,16 @@ class ReLU(Layer):
         super().__init__()
         self.alpha = alpha
         self.x = None
+        self.trainable = False
+        
+    def get_params(self) -> Dict[str, np.ndarray]:
+        """Get trainable parameters."""
+        return {'alpha': np.array([self.alpha])}
+        
+    def set_params(self, params: Dict[str, np.ndarray]) -> None:
+        """Set trainable parameters."""
+        if 'alpha' in params:
+            self.alpha = float(params['alpha'][0])
         
     def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         """Forward pass applying ReLU activation."""
@@ -31,6 +42,16 @@ class Sigmoid(Layer):
     def __init__(self):
         super().__init__()
         self.output = None
+        self.trainable = False
+        
+    def get_params(self) -> Dict[str, np.ndarray]:
+        """Get trainable parameters."""
+        return {'output': self.output} if self.output is not None else {}
+        
+    def set_params(self, params: Dict[str, np.ndarray]) -> None:
+        """Set trainable parameters."""
+        if 'output' in params:
+            self.output = params['output']
         
     def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         """Forward pass applying sigmoid activation."""
@@ -47,6 +68,16 @@ class Tanh(Layer):
     def __init__(self):
         super().__init__()
         self.output = None
+        self.trainable = False
+        
+    def get_params(self) -> Dict[str, np.ndarray]:
+        """Get trainable parameters."""
+        return {'output': self.output} if self.output is not None else {}
+        
+    def set_params(self, params: Dict[str, np.ndarray]) -> None:
+        """Set trainable parameters."""
+        if 'output' in params:
+            self.output = params['output']
         
     def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         """Forward pass applying tanh activation."""
@@ -63,6 +94,16 @@ class Softmax(Layer):
     def __init__(self):
         super().__init__()
         self.output = None
+        self.trainable = False
+        
+    def get_params(self) -> Dict[str, np.ndarray]:
+        """Get trainable parameters."""
+        return {'output': self.output} if self.output is not None else {}
+        
+    def set_params(self, params: Dict[str, np.ndarray]) -> None:
+        """Set trainable parameters."""
+        if 'output' in params:
+            self.output = params['output']
         
     def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         """Forward pass applying softmax activation."""

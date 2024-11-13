@@ -1,9 +1,8 @@
 """Neural network implementations."""
 
-from .mlp import MLP, AffineLayer, CrossEntropyLoss
+from .mlp import MLP, AffineLayer, CrossEntropyLoss, QuadraticLoss
 from .layers import Dense, BatchNormalization, MaxPool2D, GlobalAveragePooling2D, Dropout, Flatten
 from .activations import get_activation, ReLU, Sigmoid, Tanh, Softmax
-from .losses import MSELoss, CrossEntropyLoss
 from .cnn import Conv2D
 from .rnn import RNNCell
 from .transformer import MultiHeadAttention, TransformerBlock, LayerNorm

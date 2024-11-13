@@ -198,25 +198,30 @@ class QuadraticLoss(Loss):
         return (cls.y_pred - cls.y_true) / cls.y_pred.shape[0]
 
 class CrossEntropyLoss(Loss):
-    """Cross entropy loss with softmax."""
-    
     @classmethod
     def forward(cls, logits: np.ndarray, y_true: np.ndarray) -> float:
         cls.y_true = y_true
+        # Convert one-hot encoded labels to class indices if needed
+        if len(y_true.shape) > 1:
+            y_true = np.argmax(y_true, axis=1)
+            
         # Compute softmax with numerical stability
         shifted_logits = logits - np.max(logits, axis=1, keepdims=True)
         exp_logits = np.exp(shifted_logits)
         cls.softmax = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
         # Compute cross entropy
-        log_likelihood = -np.log(cls.softmax[range(len(y_true)), y_true])
-        cls.loss = np.mean(log_likelihood)
+        cls.loss = np.mean(-np.log(cls.softmax[np.arange(len(y_true)), y_true]))
         return cls.loss
 
     @classmethod
     def backward(cls) -> np.ndarray:
         grad = cls.softmax.copy()
-        grad[range(len(cls.y_true)), cls.y_true] -= 1
-        return grad / len(cls.y_true)
+        # Convert one-hot encoded labels to class indices if needed
+        y_true = cls.y_true
+        if len(y_true.shape) > 1:
+            y_true = np.argmax(y_true, axis=1)
+        grad[range(len(y_true)), y_true] -= 1
+        return grad / len(y_true)
 
 class MLP(Estimator):
     """Multi-layer perceptron implementation."""
@@ -249,12 +254,17 @@ class MLP(Estimator):
                     layer.m = {k: np.zeros_like(v) for k,v in layer.get_params().items()}
                     layer.v = {k: np.zeros_like(v) for k,v in layer.get_params().items()}
 
-    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'MLP':
+    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None,
+            batch_size: int = 32, epochs: int = 10,
+            validation_data: Optional[Tuple[np.ndarray, np.ndarray]] = None) -> 'MLP':
         """Fit the neural network to training data.
         
         Args:
             X: Training features
             y: Target values
+            batch_size: Number of samples per gradient update
+            epochs: Number of epochs to train
+            validation_data: Tuple of (X_val, y_val) for validation
             
         Returns:
             self: The fitted model
@@ -263,7 +273,46 @@ class MLP(Estimator):
         self._input_dim = X.shape[1]
         self._output_dim = y.shape[1] if len(y.shape) > 1 else 1
         
-        # Training loop would go here...
+        n_samples = X.shape[0]
+        n_batches = (n_samples + batch_size - 1) // batch_size
+        
+        for epoch in range(epochs):
+            # Training
+            indices = np.random.permutation(n_samples)
+            epoch_loss = 0
+            
+            for batch in range(n_batches):
+                batch_idx = indices[batch*batch_size:(batch+1)*batch_size]
+                X_batch = X[batch_idx]
+                y_batch = y[batch_idx]
+                
+                # Forward pass
+                loss = self.forward(X_batch, y_batch)
+                epoch_loss += loss
+                
+                # Backward pass
+                self.backward()
+                
+                # Update parameters
+                self.update_params(epoch * n_batches + batch)
+                
+            epoch_loss /= n_batches
+            self.history['loss'].append(epoch_loss)
+            
+            # Validation
+            if validation_data is not None:
+                X_val, y_val = validation_data
+                val_loss = self.forward(X_val, y_val)
+                self.history['val_loss'].append(val_loss)
+                
+                # Compute metrics
+                y_pred = self.predict(X_val)
+                for metric in self.metrics:
+                    score = metric(y_val, y_pred)
+                    self.history[f'val_{metric.__name__}'].append(score)
+                    
+            logger.info(f'Epoch {epoch+1}/{epochs} - loss: {epoch_loss:.4f}' + 
+                       (f' - val_loss: {val_loss:.4f}' if validation_data else ''))
         
         self._is_fitted = True
         return self
