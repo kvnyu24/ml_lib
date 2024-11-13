@@ -4,10 +4,14 @@ from typing import Literal, Optional, Union, List, Tuple
 import numpy as np
 from scipy.stats import mode
 
-from core.base import Estimator
-from core.validation import check_array, check_X_y, check_is_fitted
-from core.exceptions import ValidationError
-from core.metrics import euclidean_distance
+from core import (
+    Estimator,
+    check_array,
+    check_X_y,
+    check_is_fitted,
+    ValidationError,
+    euclidean_distance
+)
 
 class KNeighborsBase(Estimator):
     """Base class for K-Nearest Neighbors algorithms."""

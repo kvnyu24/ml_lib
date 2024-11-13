@@ -3,10 +3,13 @@
 from typing import Literal, Optional, Tuple
 import numpy as np
 from scipy.spatial import Voronoi
-
-from core.base import Estimator
-from core.validation import check_array, check_X_y, check_is_fitted
-from core.exceptions import ValidationError
+from core import (
+    Estimator,
+    check_array,
+    check_X_y,
+    check_is_fitted,
+    ValidationError
+)
 
 class AdaptiveKNN(Estimator):
     """KNN classifier with adaptive neighborhood size."""

@@ -3,8 +3,15 @@
 import numpy as np
 from typing import List, Optional, Dict, Union
 from .base import BaseClassifier
-from core.optimizers import BaseOptimizer, AdamOptimizer
-from core.logging import get_logger
+from optimization.optimizers import SGD, Adam
+from core import (
+    BaseClassifier,
+    get_logger,
+    check_array,
+    check_X_y,
+    check_is_fitted,
+    ValidationError
+)
 
 logger = get_logger(__name__)
 
@@ -12,10 +19,10 @@ class SoftmaxClassifier(BaseClassifier):
     """Softmax classifier with regularization and custom optimizer."""
     
     def __init__(self, C: float = 1.0, max_iter: int = 1000,
-                 optimizer: Optional[BaseOptimizer] = None):
+                 optimizer: Optional[str] = 'adam'):
         self.C = C
         self.max_iter = max_iter
-        self.optimizer = optimizer or AdamOptimizer()
+        self.optimizer = Adam() if optimizer == 'adam' else SGD()
         self.weights = None
         self.bias = None
         
@@ -32,7 +39,7 @@ class SoftmaxClassifier(BaseClassifier):
         y_onehot[np.arange(n_samples), y] = 1
         
         # Training loop
-        for _ in range(self.max_iter):
+        for i in range(self.max_iter):
             # Forward pass
             scores = np.dot(X, self.weights) + self.bias
             exp_scores = np.exp(scores - np.max(scores, axis=1, keepdims=True))
@@ -44,8 +51,8 @@ class SoftmaxClassifier(BaseClassifier):
             db = np.sum(dscores, axis=0) / n_samples
             
             # Update parameters using optimizer
-            self.weights = self.optimizer.update('weights', self.weights, dW)
-            self.bias = self.optimizer.update('bias', self.bias, db)
+            self.weights = self.optimizer.compute_update(self.weights, dW)
+            self.bias = self.optimizer.compute_update(self.bias, db)
         
     def predict(self, X: np.ndarray) -> np.ndarray:
         scores = np.dot(X, self.weights) + self.bias

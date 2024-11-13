@@ -4,11 +4,11 @@ import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from typing import Callable, List, Any, Optional, Iterator, Dict
 import numpy as np
-import logging
 from functools import partial
 from tqdm import tqdm
+from core import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class ThreadPool:
     """Thread-based parallel executor for I/O-bound tasks."""

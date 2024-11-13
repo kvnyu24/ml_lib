@@ -5,9 +5,9 @@ import json
 import numpy as np
 from typing import Any, Dict, Optional
 from pathlib import Path
-import logging
+from core import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 def save_model(model: Any, path: str, compress: bool = True) -> None:
     """Save model to disk."""

@@ -2,10 +2,12 @@
 
 import numpy as np
 from typing import Optional, Union, Dict
-from core import BaseTransformer
-from core.validation import check_array
+from core import (
+    Transformer,
+    check_array
+)
 
-class MissingValueImputer(BaseTransformer):
+class MissingValueImputer(Transformer):
     """Imputation transformer for completing missing values."""
     
     def __init__(self, strategy: str = 'mean', fill_value: Optional[Union[str, float]] = None):

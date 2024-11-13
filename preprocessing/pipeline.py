@@ -1,13 +1,13 @@
 """Preprocessing pipeline utilities."""
 
 from typing import List, Union, Optional
-from core import BaseTransformer
+from core import Transformer
 import numpy as np
 
 class PreprocessingPipeline:
     """Pipeline for combining multiple preprocessing steps."""
     
-    def __init__(self, steps: List[Union[tuple, BaseTransformer]]):
+    def __init__(self, steps: List[Union[tuple, Transformer]]):
         self.steps = []
         for step in steps:
             if isinstance(step, tuple):

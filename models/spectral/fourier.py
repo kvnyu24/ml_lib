@@ -23,6 +23,17 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from scipy import fftpack, integrate
 from scipy.optimize import minimize
+from core import (
+    Estimator,
+    Transformer,
+    check_array,
+    check_X_y,
+    check_is_fitted,
+    Number,
+    Array,
+    Features,
+    Target
+)
 
 @dataclass
 class Dataset:
@@ -31,7 +42,7 @@ class Dataset:
     y: np.ndarray
     freq_domain: Optional[np.ndarray] = None
 
-class BaseFourierModel(ABC):
+class BaseFourierModel(Estimator):
     """Abstract base class for Fourier series models."""
     
     @abstractmethod
@@ -76,6 +87,7 @@ class AdaptiveFourierModel(BaseFourierModel):
         return np.mean((y - y_pred)**2) + reg_term
         
     def fit(self, x: np.ndarray, y: np.ndarray) -> None:
+        x, y = check_X_y(x, y)
         self._initialize_frequencies(len(x))
         
         # Initialize amplitudes and phases
@@ -87,10 +99,11 @@ class AdaptiveFourierModel(BaseFourierModel):
         
         self.amplitudes = result.x[:self.max_components]
         self.phases = result.x[self.max_components:]
+        return self
         
     def predict(self, x: np.ndarray) -> np.ndarray:
-        if self.amplitudes is None:
-            raise ValueError("Model must be fitted first")
+        check_is_fitted(self, ['amplitudes', 'phases'])
+        x = check_array(x)
             
         y_pred = np.zeros_like(x)
         for a, p, f in zip(self.amplitudes, self.phases, self.frequencies):
@@ -114,7 +127,7 @@ class SpectralKernel:
         x2_fft = fftpack.fft(x2)
         return np.real(x1_fft @ x2_fft.conj())
 
-class FourierFeatureLearner:
+class FourierFeatureLearner(Transformer):
     """Learn optimal Fourier features."""
     
     def __init__(self, n_components: int = 10):
@@ -123,6 +136,8 @@ class FourierFeatureLearner:
         
     def fit_transform(self, X: np.ndarray) -> np.ndarray:
         """Learn and transform to Fourier features."""
+        X = check_array(X)
+        
         # Compute frequency components
         freqs = fftpack.fftfreq(len(X))
         fft_vals = fftpack.fft(X)

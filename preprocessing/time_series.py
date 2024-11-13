@@ -2,10 +2,14 @@
 
 import numpy as np
 from typing import Optional, List, Union, Tuple
-from core import BaseTransformer
-from core.validation import check_array
+from core import (
+    Transformer,
+    check_array,
+    EPSILON,
+    get_logger
+)
 
-class TimeSeriesScaler(BaseTransformer):
+class TimeSeriesScaler(Transformer):
     """Scale time series data while preserving temporal dependencies."""
     
     def __init__(self, window_size: int = 10, scale_method: str = 'standard'):
@@ -36,11 +40,11 @@ class TimeSeriesScaler(BaseTransformer):
         rolling_mean, rolling_std = self.statistics_
         
         if self.scale_method == 'standard':
-            X_scaled = (X - rolling_mean) / (rolling_std + 1e-8)
+            X_scaled = (X - rolling_mean) / (rolling_std + EPSILON)
             
         return X_scaled
 
-class LagFeatureGenerator(BaseTransformer):
+class LagFeatureGenerator(Transformer):
     """Generate lagged features for time series data."""
     
     def __init__(self, lags: List[int]):
@@ -70,7 +74,7 @@ class LagFeatureGenerator(BaseTransformer):
             
         return X_lagged
 
-class SeasonalDecomposer(BaseTransformer):
+class SeasonalDecomposer(Transformer):
     """Decompose time series into trend, seasonal, and residual components."""
     
     def __init__(self, period: int, model: str = 'additive'):

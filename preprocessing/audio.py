@@ -2,10 +2,10 @@
 
 import numpy as np
 from typing import Optional, Dict, Union
-from core import BaseTransformer
+from core import Transformer
 import librosa
 
-class AudioPreprocessor(BaseTransformer):
+class AudioPreprocessor(Transformer):
     """Audio signal preprocessing utilities."""
     
     def __init__(self,
@@ -48,7 +48,7 @@ class AudioPreprocessor(BaseTransformer):
             
         return np.array(spectrograms)
 
-class AudioFeatureExtractor(BaseTransformer):
+class AudioFeatureExtractor(Transformer):
     """Extract audio features."""
     
     def __init__(self,

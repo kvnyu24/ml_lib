@@ -3,13 +3,16 @@
 import numpy as np
 import time
 from typing import List, Dict
-from core.base import BaseEstimator
-from ..evaluation import KFoldCV, get_metric
+from core import (
+    Estimator,
+    KFoldCV,
+    get_metric
+)
 
 class AutoML:
     """Automated machine learning implementation."""
     
-    def __init__(self, models: List[BaseEstimator], 
+    def __init__(self, models: List[Estimator], 
                  param_distributions: List[Dict],
                  max_time: int = 3600,
                  cv: int = 5,

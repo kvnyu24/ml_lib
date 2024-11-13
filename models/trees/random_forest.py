@@ -4,8 +4,14 @@ import numpy as np
 from typing import Optional, List, Union
 from joblib import Parallel, delayed
 from .decision_tree import DecisionTreeClassifier
-from core.base import Estimator
-from core.validation import check_X_y
+from core import (
+    Estimator,
+    check_X_y,
+    check_array,
+    check_is_fitted,
+    get_logger,
+    ValidationError
+)
 
 class RandomForestClassifier(Estimator):
     """Random forest classifier implementation."""

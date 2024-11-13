@@ -2,7 +2,11 @@
 
 import numpy as np
 from typing import Optional, Dict, Union, Callable
-from core.base import Layer
+from core import (
+    Layer,
+    EPSILON,
+    DEFAULT_RANDOM_STATE
+)
 from scipy import sparse
 import warnings
 
@@ -92,7 +96,7 @@ class GraphConvolution(Layer):
         
         # Calculate degree matrix
         D = np.sum(A_hat, axis=1)
-        D_inv = 1 / (D + 1e-10)
+        D_inv = 1 / (D + EPSILON)
         D_inv_sqrt = np.sqrt(D_inv)
         
         if self.norm_type == 'symmetric':

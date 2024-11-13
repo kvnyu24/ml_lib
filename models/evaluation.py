@@ -2,11 +2,16 @@
 
 import numpy as np
 from typing import Dict, List, Optional, Union, Callable, Any
-from core import Estimator, Metric
-from core.data import Dataset
-from core.validation import check_X_y, check_is_fitted
-from core.metrics import MetricList, get_metric
-from core.logging import get_logger
+from core import (
+    Estimator,
+    Metric,
+    Dataset,
+    check_X_y,
+    check_is_fitted,
+    MetricList,
+    get_metric,
+    get_logger
+)
 
 logger = get_logger(__name__)
 

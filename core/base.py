@@ -295,7 +295,7 @@ class DistanceMetric(ABC):
         """Calculate gradient of distance metric."""
         pass
 
-class BaseTransformer(ABC):
+class Transformer(ABC):
     """Base class for all transformers.
     
     All transformers should inherit from this class and implement:
@@ -312,7 +312,7 @@ class BaseTransformer(ABC):
         self._n_features_in = None
         
     @abstractmethod
-    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'BaseTransformer':
+    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'Transformer':
         """Learn transformation parameters from training data.
         
         Args:
@@ -394,7 +394,7 @@ class BaseTransformer(ABC):
             if not key.startswith('_')
         }
         
-    def set_params(self, **params) -> 'BaseTransformer':
+    def set_params(self, **params) -> 'Transformer':
         """Set transformer parameters."""
         for key, value in params.items():
             setattr(self, key, value)

@@ -21,8 +21,11 @@ from typing import Dict, List, Optional, Tuple, Union, Any, Callable
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
-from core.base import Optimizer, Function
-from core.logging import get_logger
+from core import (
+    Optimizer,
+    Function,
+    get_logger,
+)
 
 # Configure logging
 logger = get_logger(__name__)

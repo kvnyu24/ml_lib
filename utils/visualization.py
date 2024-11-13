@@ -4,8 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typing import Optional, Dict, List, Union, Any, Tuple
 from pathlib import Path
-from core.logging import get_logger
-from core.metrics import roc_curve, precision_recall_curve
+from core import (
+    get_logger,
+    roc_curve,
+    precision_recall_curve
+)
 
 # Configure logging using core logger
 logger = get_logger(__name__)

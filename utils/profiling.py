@@ -6,11 +6,11 @@ import cProfile
 import pstats
 from typing import Any, Callable
 from functools import wraps
-import logging
 import psutil
 import numpy as np
+from core import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 def time_function(func: Callable) -> Callable:
     """Decorator to measure function execution time."""

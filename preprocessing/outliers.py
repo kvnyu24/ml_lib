@@ -2,10 +2,12 @@
 
 import numpy as np
 from typing import Optional, List
-from core import BaseTransformer
-from core.validation import check_array
+from core import (
+    Transformer,
+    check_array
+)
 
-class OutlierDetector(BaseTransformer):
+class OutlierDetector(Transformer):
     """Base class for outlier detection."""
     
     def __init__(self, contamination: float = 0.1):

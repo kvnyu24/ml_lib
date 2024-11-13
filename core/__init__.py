@@ -1,6 +1,6 @@
 """Core components of the ML library."""
 
-from .base import Estimator, Optimizer, Loss, Layer, BaseTransformer
+from .base import Estimator, Optimizer, Loss, Layer, Transformer
 from .config import ModelConfig, TrainingConfig, ConfigManager
 from .exceptions import (
     MLLibraryError, NotFittedError, ConvergenceError,
@@ -23,7 +23,7 @@ from .dtypes import (
 
 __all__ = [
     # Base classes
-    'Estimator', 'Optimizer', 'Loss', 'Layer', 'BaseTransformer',
+    'Estimator', 'Optimizer', 'Loss', 'Layer', 'Transformer',
     
     # Configuration
     'ModelConfig', 'TrainingConfig', 'ConfigManager',

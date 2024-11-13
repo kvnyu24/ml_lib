@@ -3,10 +3,16 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from typing import Dict
-from core.metrics import accuracy, precision, recall, f1, roc_auc
-from core.base import BaseEstimator
+from core import (
+    Estimator,
+    accuracy,
+    precision,
+    recall,
+    f1,
+    roc_auc
+)
 
-class BaseClassifier(BaseEstimator, ABC):
+class BaseClassifier(Estimator, ABC):
     """Abstract base class for classifiers."""
     
     @abstractmethod

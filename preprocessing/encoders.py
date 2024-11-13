@@ -2,10 +2,14 @@
 
 import numpy as np
 from typing import Optional, List, Dict
-from core import BaseTransformer
-from core.validation import check_array
+from core import (
+    Transformer,
+    check_array,
+    ValidationError,
+    get_logger
+)
 
-class LabelEncoder(BaseTransformer):
+class LabelEncoder(Transformer):
     """Encode categorical labels with value between 0 and n_classes-1."""
     
     def __init__(self):
@@ -24,7 +28,7 @@ class LabelEncoder(BaseTransformer):
         y = check_array(y, ensure_2d=False)
         return np.array([self.mapping_[val] for val in y])
 
-class OneHotEncoder(BaseTransformer):
+class OneHotEncoder(Transformer):
     """Encode categorical features as a one-hot numeric array."""
     
     def __init__(self, sparse: bool = False, handle_unknown: str = 'error'):

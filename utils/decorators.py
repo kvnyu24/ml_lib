@@ -1,13 +1,12 @@
 """Utility decorators for function and class behavior modification."""
 
 import time
-import logging
 import functools
 import warnings
 from typing import Callable, Optional, Any
-from core.exceptions import NotFittedError
+from core import exceptions, get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 def timer(func: Callable) -> Callable:
     """Decorator to measure function execution time."""
@@ -67,7 +66,7 @@ def require_fitted(attribute: str = 'is_fitted_') -> Callable:
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             if not hasattr(self, attribute):
-                raise NotFittedError(
+                raise exceptions.NotFittedError(
                     f"This {type(self).__name__} instance is not fitted yet. "
                     f"Call 'fit' with appropriate arguments before using this method."
                 )

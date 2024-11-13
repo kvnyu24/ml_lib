@@ -3,9 +3,13 @@
 import numpy as np
 from typing import Optional, List, Tuple, Dict, Union
 from dataclasses import dataclass
-from core.metrics import Entropy, GiniImpurity, information_gain
-from core.base import Estimator
-from core.validation import check_X_y
+from core import (
+    Entropy,
+    GiniImpurity,
+    information_gain,
+    Estimator,
+    check_X_y
+)
 
 @dataclass
 class Node:
@@ -198,4 +202,3 @@ class DecisionTreeClassifier(Estimator):
         if x[node.feature_idx] <= node.threshold:
             return self._traverse_tree(x, node.left)
         return self._traverse_tree(x, node.right)
-</file> 

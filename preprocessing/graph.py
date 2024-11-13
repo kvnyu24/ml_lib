@@ -2,10 +2,10 @@
 
 import numpy as np
 from typing import Optional, List, Dict, Tuple
-from core import BaseTransformer
+from core import Transformer
 import networkx as nx
 
-class GraphFeatureExtractor(BaseTransformer):
+class GraphFeatureExtractor(Transformer):
     """Extract features from graph structures."""
     
     def __init__(self, features: List[str] = ['degree', 'centrality', 'clustering']):
@@ -39,7 +39,7 @@ class GraphFeatureExtractor(BaseTransformer):
             
         return np.array(features_list)
 
-class GraphNormalizer(BaseTransformer):
+class GraphNormalizer(Transformer):
     """Normalize graph adjacency matrices."""
     
     def __init__(self, normalization: str = 'symmetric'):

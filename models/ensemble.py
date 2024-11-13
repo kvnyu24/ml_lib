@@ -2,7 +2,7 @@
 
 import numpy as np
 from typing import List, Optional, Union, Callable
-from core.base import Estimator, Loss
+from core import Estimator, Loss
 
 class GradientBoostingLoss(Loss):
     """Loss function for gradient boosting."""

@@ -3,9 +3,14 @@
 import numpy as np
 from typing import Callable, Optional, Tuple
 from scipy.integrate import solve_ivp
-from core.base import BaseEstimator
+from core import (
+    Estimator,
+    check_array,
+    get_logger,
+    ValidationError
+)
 
-class NeuralODE(BaseEstimator):
+class NeuralODE(Estimator):
     """Neural Ordinary Differential Equation model."""
     
     def __init__(self,
@@ -25,4 +30,4 @@ class NeuralODE(BaseEstimator):
             method=self.solver,
             t_eval=t_eval
         )
-        return solution.y 
+        return solution.y

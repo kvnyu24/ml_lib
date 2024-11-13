@@ -2,10 +2,9 @@
 
 import numpy as np
 from typing import Optional, Union, Dict
-from core import BaseTransformer
-from core.validation import check_array
+from core import Transformer, check_array
 
-class StandardScaler(BaseTransformer):
+class StandardScaler(Transformer):
     """Standardize features by removing mean and scaling to unit variance."""
     
     def __init__(self, with_mean: bool = True, with_std: bool = True):
@@ -37,7 +36,7 @@ class StandardScaler(BaseTransformer):
             
         return X
 
-class MinMaxScaler(BaseTransformer):
+class MinMaxScaler(Transformer):
     """Scale features to a given range."""
     
     def __init__(self, feature_range: tuple = (0, 1)):

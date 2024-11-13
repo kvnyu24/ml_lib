@@ -6,8 +6,12 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from scipy.optimize import fsolve
 
-from core import Optimizer, Function, EPSILON
-from core.logging import get_logger
+from core import (
+    Optimizer,
+    Function,
+    EPSILON,
+    get_logger
+)
 
 # Configure logging
 logger = get_logger(__name__)

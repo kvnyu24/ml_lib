@@ -4,10 +4,14 @@ import numpy as np
 from typing import List, Dict, Optional, Union
 from collections import Counter
 import re
-from core import BaseTransformer
-from core.validation import check_array
+from core import (
+    Transformer,
+    check_array,
+    get_logger,
+    ValidationError
+)
 
-class TextPreprocessor(BaseTransformer):
+class TextPreprocessor(Transformer):
     """Basic text preprocessing utilities."""
     
     def __init__(self,
@@ -70,7 +74,7 @@ class TextPreprocessor(BaseTransformer):
             
         return processed
 
-class TfidfVectorizer(BaseTransformer):
+class TfidfVectorizer(Transformer):
     """Convert text collection to TF-IDF features."""
     
     def __init__(self,
@@ -141,7 +145,7 @@ class TfidfVectorizer(BaseTransformer):
                     
         return result
 
-class Word2VecEncoder(BaseTransformer):
+class Word2VecEncoder(Transformer):
     """Encode text using Word2Vec embeddings."""
     
     def __init__(self,

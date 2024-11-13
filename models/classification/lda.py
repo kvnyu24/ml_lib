@@ -2,8 +2,14 @@
 
 import numpy as np
 from typing import Optional, Tuple
-from core.base import Estimator
-from core.validation import check_X_y, check_array
+from core import (
+    Estimator,
+    check_X_y,
+    check_array,
+    check_is_fitted,
+    EPSILON,
+    DEFAULT_RANDOM_STATE
+)
 from scipy.linalg import eigh
 
 class LDA(Estimator):

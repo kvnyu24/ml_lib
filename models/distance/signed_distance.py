@@ -2,8 +2,12 @@
 
 import numpy as np
 from typing import Dict
-from .metrics import EuclideanDistance
-from core.base import DistanceMetric
+from core import (
+    DistanceMetric,
+    EuclideanDistance,
+    check_array,
+    get_logger
+)
 
 class SignedDistanceCalculator:
     """Calculator for signed distances in high dimensions."""

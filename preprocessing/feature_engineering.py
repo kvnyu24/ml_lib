@@ -3,13 +3,15 @@
 import numpy as np
 from typing import Optional, List, Union
 from itertools import combinations
-from core import BaseTransformer
-from core.validation import check_array
-from core.logging import get_logger
+from core import (
+    Transformer,
+    check_array,
+    get_logger
+)
 
 logger = get_logger(__name__)
 
-class PolynomialFeatures(BaseTransformer):
+class PolynomialFeatures(Transformer):
     """Generate polynomial and interaction features."""
     
     def __init__(self, degree: int = 2, interaction_only: bool = False):

@@ -25,7 +25,7 @@ from abc import ABC, abstractmethod
 from core import (
     Estimator, Loss,
     check_array, check_X_y, check_is_fitted,
-    setup_logger, TrainingLogger,
+    get_logger, TrainingLogger,
     Number, Array, Features, Target,
     EPSILON, DEFAULT_RANDOM_STATE
 )
@@ -33,7 +33,7 @@ from core import (
 from optimization.optimizers import AdamOptimizer, RMSpropOptimizer
 
 # Configure logging
-logger = setup_logger(__name__)
+logger = get_logger(__name__)
 
 class ElasticNetLoss(Loss):
     """Elastic Net loss function with L1 and L2 regularization."""

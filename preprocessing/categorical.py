@@ -2,10 +2,13 @@
 
 import numpy as np
 from typing import Optional, Dict, List, Union
-from core import BaseTransformer
-from core.validation import check_array
+from core import (
+    Transformer,
+    check_array,
+    EPSILON
+)
 
-class CategoricalEncoder(BaseTransformer):
+class CategoricalEncoder(Transformer):
     """Base class for categorical encoders."""
     
     def __init__(self):
@@ -66,8 +69,7 @@ class WOEEncoder(CategoricalEncoder):
                 neg_rate = np.mean(y[mask] == 0)
                 
                 # Add smoothing to avoid division by zero
-                eps = 1e-10
-                woe = np.log((pos_rate + eps) / (neg_rate + eps))
+                woe = np.log((pos_rate + EPSILON) / (neg_rate + EPSILON))
                 self.mapping_[col][val] = woe
                 
         return self

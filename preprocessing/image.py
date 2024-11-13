@@ -2,10 +2,10 @@
 
 import numpy as np
 from typing import Optional, Tuple, Union
-from core import BaseTransformer
+from core import Transformer
 import cv2
 
-class ImagePreprocessor(BaseTransformer):
+class ImagePreprocessor(Transformer):
     """Basic image preprocessing utilities."""
     
     def __init__(self,
@@ -58,7 +58,7 @@ class ImagePreprocessor(BaseTransformer):
         
         return img
 
-class ImageFeatureExtractor(BaseTransformer):
+class ImageFeatureExtractor(Transformer):
     """Extract features from images using pre-trained models."""
     
     def __init__(self,

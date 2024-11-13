@@ -2,9 +2,9 @@
 
 import numpy as np
 from typing import Optional, List, Dict, Union
-from core import BaseTransformer
+from core import Transformer
 
-class SequencePadder(BaseTransformer):
+class SequencePadder(Transformer):
     """Pad sequences to equal length."""
     
     def __init__(self, max_length: Optional[int] = None, padding: str = 'post', value: float = 0.0):
@@ -40,7 +40,7 @@ class SequencePadder(BaseTransformer):
             
         return np.array(padded)
 
-class SequenceAugmenter(BaseTransformer):
+class SequenceAugmenter(Transformer):
     """Augment sequence data."""
     
     def __init__(self,

@@ -76,7 +76,7 @@ __version__ = '0.1.0'
 
 __all__ = [
     # Base classes
-    'Estimator', 'Optimizer', 'Loss', 'Layer', 'BaseTransformer',
+    'Estimator', 'Optimizer', 'Loss', 'Layer', 'Transformer',
     
     # Configuration
     'ModelConfig', 'TrainingConfig', 'ConfigManager',
