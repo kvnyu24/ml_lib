@@ -283,6 +283,19 @@ class Layer(ABC):
         if len(weights) > 0:
             self.weights = weights[0]
 
+class DistanceMetric(ABC):
+    """Abstract base class for distance metrics."""
+    
+    @abstractmethod
+    def calculate(self, x: np.ndarray, y: np.ndarray) -> float:
+        """Calculate distance between two points."""
+        pass
+    
+    @abstractmethod
+    def gradient(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        """Calculate gradient of distance metric."""
+        pass
+
 class BaseTransformer(ABC):
     """Base class for all transformers.
     

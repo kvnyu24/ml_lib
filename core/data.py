@@ -5,6 +5,8 @@ from typing import List, Optional, Tuple
 from dataclasses import dataclass
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectKBest, mutual_info_classif
+import pickle
+from pathlib import Path
 
 @dataclass
 class Dataset:
@@ -37,3 +39,30 @@ class Dataset:
         X_new = selector.fit_transform(self.X, self.y)
         selected_features = [self.feature_names[i] for i in selector.get_support(indices=True)]
         return Dataset(X_new, self.y, selected_features, self.target_names) 
+
+def train_test_split(X: np.ndarray, y: np.ndarray, 
+                    test_size: float = 0.2,
+                    random_state: Optional[int] = None) -> Tuple[np.ndarray, ...]:
+    """Split arrays into train and test subsets."""
+    if random_state is not None:
+        np.random.seed(random_state)
+        
+    n_samples = len(y)
+    n_test = int(n_samples * test_size)
+    indices = np.random.permutation(n_samples)
+    
+    test_idx = indices[:n_test]
+    train_idx = indices[n_test:]
+    
+    return (X[train_idx], X[test_idx], y[train_idx], y[test_idx])
+
+def load_dataset(filepath: str) -> Tuple[np.ndarray, np.ndarray]:
+    """Load dataset from pickle file."""
+    with open(filepath, 'rb') as f:
+        data = pickle.load(f)
+    return data['X'], data['y']
+
+def save_dataset(X: np.ndarray, y: np.ndarray, filepath: str) -> None:
+    """Save dataset to pickle file."""
+    with open(filepath, 'wb') as f:
+        pickle.dump({'X': X, 'y': y}, f)

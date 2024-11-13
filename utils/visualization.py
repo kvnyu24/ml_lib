@@ -105,36 +105,22 @@ def plot_decision_boundary(model: Any,
         logger.error(f"Error plotting decision boundary: {str(e)}")
         raise
 
-def plot_signed_distances(dims: np.ndarray,
-                         delta_p0: np.ndarray, 
-                         delta_p1: np.ndarray,
-                         title: Optional[str] = None,
-                         figsize: Tuple[int, int] = (10, 6),
-                         save_path: Optional[str] = None) -> None:
-    """Plot signed distances vs dimension.
+class DistanceVisualizer:
+    """Visualization tools for distance analysis."""
     
-    Args:
-        dims: Array of dimensions
-        delta_p0: Signed distances for zero point
-        delta_p1: Signed distances for one point
-        title: Plot title (optional)
-        figsize: Figure dimensions
-        save_path: Path to save figure (optional)
-        
-    Raises:
-        ValueError: If input arrays have mismatched lengths
-    """
-    if not (len(dims) == len(delta_p0) == len(delta_p1)):
-        raise ValueError("Input arrays must have same length")
-        
-    try:
-        plt.figure(figsize=figsize)
+    def plot_signed_distances(self,
+                            dims: np.ndarray,
+                            delta_p0: np.ndarray,
+                            delta_p1: np.ndarray,
+                            save_path: Optional[str] = None) -> None:
+        """Plot signed distances vs dimension."""
+        plt.figure(figsize=(10, 6))
         plt.plot(dims, delta_p0, 'bo-', label='p = (0, ..., 0)', linewidth=2)
         plt.plot(dims, delta_p1, 'ro-', label='p = (1, ..., 1)', linewidth=2)
 
         plt.xlabel('Dimension d', fontsize=12)
         plt.ylabel('Signed Distance Δd', fontsize=12)
-        plt.title(title or 'Signed Distance vs Dimension', fontsize=14)
+        plt.title('Signed Distance vs Dimension', fontsize=14)
         plt.legend(fontsize=10)
         plt.grid(True)
         plt.xticks(dims)
@@ -142,53 +128,25 @@ def plot_signed_distances(dims: np.ndarray,
         if save_path:
             plt.savefig(save_path)
         plt.show()
-            
-    except Exception as e:
-        logger.error(f"Error plotting signed distances: {str(e)}")
-        raise
-
-def plot_distance_scaling(analysis_results: Dict[str, np.ndarray],
-                         title: Optional[str] = None,
-                         figsize: Tuple[int, int] = (10, 6),
-                         save_path: Optional[str] = None) -> None:
-    """Plot distance scaling analysis.
-    
-    Args:
-        analysis_results: Dictionary with dimensions, means and stds
-        title: Plot title (optional)
-        figsize: Figure dimensions
-        save_path: Path to save figure (optional)
         
-    Raises:
-        KeyError: If required keys missing from results
-        ValueError: If arrays have invalid/mismatched shapes
-    """
-    required_keys = {'dimensions', 'mean_distances', 'std_distances'}
-    if not required_keys.issubset(analysis_results.keys()):
-        raise KeyError(f"Missing required keys: {required_keys - set(analysis_results.keys())}")
-        
-    try:
+    def plot_distance_scaling(self,
+                            analysis_results: Dict[str, np.ndarray],
+                            save_path: Optional[str] = None) -> None:
+        """Plot distance scaling analysis."""
         dims = analysis_results['dimensions']
         means = analysis_results['mean_distances']
         stds = analysis_results['std_distances']
         
-        if not (len(dims) == len(means) == len(stds)):
-            raise ValueError("Input arrays must have same length")
-            
-        plt.figure(figsize=figsize)
+        plt.figure(figsize=(10, 6))
         plt.plot(dims, means, 'b-', label='Mean Distance', linewidth=2)
         plt.fill_between(dims, means - stds, means + stds, alpha=0.2)
         
         plt.xlabel('Dimension', fontsize=12)
         plt.ylabel('Distance', fontsize=12)
-        plt.title(title or 'Distance Scaling with Dimension', fontsize=14)
+        plt.title('Distance Scaling with Dimension', fontsize=14)
         plt.legend(fontsize=10)
         plt.grid(True)
         
         if save_path:
-            plt.savefig(save_path, bbox_inches='tight', dpi=300)
+            plt.savefig(save_path)
         plt.show()
-            
-    except Exception as e:
-        logger.error(f"Error plotting distance scaling: {str(e)}")
-        raise

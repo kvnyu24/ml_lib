@@ -69,6 +69,97 @@ class R2Score(Metric):
             return 0.0
         return 1 - (ss_res / ss_tot)
 
+class ImpurityMetric(Metric):
+    """Base class for impurity metrics."""
+    
+    def compute_proportions(self, y: np.ndarray) -> np.ndarray:
+        """Compute class proportions."""
+        if len(y) == 0:
+            return np.array([])
+        classes, counts = np.unique(y, return_counts=True)
+        return counts / len(y)
+
+class Entropy(ImpurityMetric):
+    """Entropy impurity metric."""
+    
+    def __init__(self):
+        super().__init__('entropy')
+        
+    def __call__(self, y: np.ndarray, y_pred: Optional[np.ndarray] = None) -> float:
+        """Compute entropy: -Σ p_i * log(p_i)."""
+        proportions = self.compute_proportions(y)
+        # Avoid log(0) by filtering out zero proportions
+        nonzero_props = proportions[proportions > 0]
+        return -np.sum(nonzero_props * np.log2(nonzero_props))
+
+class GiniImpurity(ImpurityMetric):
+    """Gini impurity metric."""
+    
+    def __init__(self):
+        super().__init__('gini')
+        
+    def __call__(self, y: np.ndarray, y_pred: Optional[np.ndarray] = None) -> float:
+        """Compute Gini impurity: 1 - Σ p_i^2."""
+        proportions = self.compute_proportions(y)
+        return 1 - np.sum(proportions ** 2)
+
+class MisclassificationError(ImpurityMetric):
+    """Misclassification error metric."""
+    
+    def __init__(self):
+        super().__init__('misclassification')
+        
+    def __call__(self, y: np.ndarray, y_pred: Optional[np.ndarray] = None) -> float:
+        """Compute misclassification error: 1 - max(p_i)."""
+        proportions = self.compute_proportions(y)
+        return 1 - np.max(proportions) if len(proportions) > 0 else 0.0
+
+def information_gain(y_parent: np.ndarray, y_children: List[np.ndarray], 
+                    impurity_metric: ImpurityMetric = Entropy()) -> float:
+    """Calculate information gain for a split.
+    
+    Args:
+        y_parent: Labels in parent node
+        y_children: List of labels in child nodes
+        impurity_metric: Impurity metric to use
+        
+    Returns:
+        Information gain from the split
+    """
+    parent_impurity = impurity_metric(y_parent)
+    
+    # Weighted sum of child impurities
+    n_parent = len(y_parent)
+    weighted_child_impurity = sum(
+        len(child) / n_parent * impurity_metric(child)
+        for child in y_children
+    )
+    
+    return parent_impurity - weighted_child_impurity
+
+def gain_ratio(y_parent: np.ndarray, y_children: List[np.ndarray],
+               impurity_metric: ImpurityMetric = Entropy()) -> float:
+    """Calculate gain ratio (normalized information gain).
+    
+    Args:
+        y_parent: Labels in parent node
+        y_children: List of labels in child nodes
+        impurity_metric: Impurity metric to use
+        
+    Returns:
+        Gain ratio for the split
+    """
+    ig = information_gain(y_parent, y_children, impurity_metric)
+    
+    # Split information
+    n_parent = len(y_parent)
+    split_info = -sum(
+        (len(child) / n_parent) * np.log2(len(child) / n_parent)
+        for child in y_children
+    )
+    
+    return ig / split_info if split_info != 0 else 0.0
+
 def get_metric(metric: Union[str, Metric, Callable]) -> Metric:
     """Get metric instance from string, callable or Metric object."""
     if isinstance(metric, Metric):
@@ -116,3 +207,17 @@ class MetricList:
             except Exception as e:
                 results[metric.name] = None
         return results
+
+# Update __all__ list
+__all__ = [
+    'Metric',
+    'Accuracy',
+    'MSE',
+    'MAE',
+    'ImpurityMetric',
+    'Entropy',
+    'GiniImpurity',
+    'MisclassificationError',
+    'information_gain',
+    'gain_ratio'
+]
