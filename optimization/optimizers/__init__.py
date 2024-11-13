@@ -2,7 +2,7 @@
 
 from .base import SGD, Adam
 from .gradient import RMSprop, Momentum, Adagrad
-from .advanced import Adamax, Nadam
+from .advanced import Adamax, Nadam, LionOptimizer
 from .global_optimizers import ParticleSwarmOptimizer, TrustRegionOptimizer
 
 __all__ = [
@@ -14,5 +14,6 @@ __all__ = [
     'Adamax',
     'Nadam',
     'ParticleSwarmOptimizer',
-    'TrustRegionOptimizer'
+    'TrustRegionOptimizer',
+    'LionOptimizer'
 ]

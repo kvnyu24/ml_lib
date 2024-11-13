@@ -1,8 +1,7 @@
 """Active learning implementations."""
 
 import numpy as np
-from sklearn.base import BaseEstimator
-from core.base import Estimator
+from core.base import BaseEstimator
 
 class ActiveLearner:
     """Active learning implementation."""

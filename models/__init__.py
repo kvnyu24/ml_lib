@@ -20,11 +20,26 @@ from .svm import (
     SVMModelSelector
 )
 
+from .linear import (
+    ElasticNetRegression,
+    ElasticNetLoss
+)
+
+
 # Advanced learning models
-from .meta import MetaLearner
-from .transfer import TransferLearner
+from .experimental import (
+    ActiveLearner,
+    MetaLearner,
+    TransferLearner,
+    AutoML,
+    NeuralODE
+)
+
+from .topic import (
+    LatentDirichletAllocation
+)
+
 from .ensemble import EnsembleLearner
-from .automl import AutoML
 
 # Evaluation utilities
 from .evaluation import (
@@ -38,6 +53,10 @@ __all__ = [
     'SoftmaxClassifier',
     'SVMClassifier',
     'EnsembleClassifier',
+
+    # Linear models
+    'ElasticNetRegression',
+    'ElasticNetLoss',
     
     # Trees
     'DecisionTreeClassifier',
@@ -52,7 +71,11 @@ __all__ = [
     'TransferLearner',
     'EnsembleLearner',
     'AutoML',
-    
+    'NeuralODE',
+
+    # Topic modeling
+    'LatentDirichletAllocation',
+
     # Evaluation
     'ModelEvaluator',
     'ModelSelector'

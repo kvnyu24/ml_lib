@@ -3,8 +3,8 @@
 import numpy as np
 import time
 from typing import List, Dict
-from sklearn.base import BaseEstimator
-from sklearn.model_selection import RandomizedSearchCV
+from core.base import BaseEstimator
+from models.model_selection import RandomizedSearch
 
 class AutoML:
     """Automated machine learning implementation."""
@@ -26,9 +26,9 @@ class AutoML:
             if time.time() - start_time > self.max_time:
                 break
                 
-            search = RandomizedSearchCV(model, params, n_jobs=-1)
+            search = RandomizedSearch(model, params)
             search.fit(X, y)
             
             if search.best_score_ > best_score:
                 best_score = search.best_score_
-                self.best_model = search.best_estimator_ 
+                self.best_model = search.best_estimator_

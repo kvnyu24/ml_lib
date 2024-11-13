@@ -66,3 +66,20 @@ class Nadam(Optimizer):
         self._state['v'] = v
         
         return params - self.learning_rate * (self.beta1 * m_hat + (1 - self.beta1) * gradients) / (np.sqrt(v_hat) + self.epsilon) 
+    
+
+class LionOptimizer(Optimizer):
+    """Implementation of the Lion optimizer."""
+    
+    def __init__(self,
+                 lr: float = 0.001,
+                 beta1: float = 0.9,
+                 beta2: float = 0.99):
+        super().__init__()
+        self.lr = lr
+        self.beta1 = beta1
+        self.beta2 = beta2
+        
+    def step(self, params: np.ndarray, grads: np.ndarray) -> np.ndarray:
+        # Implement Lion optimization step
+        pass 
