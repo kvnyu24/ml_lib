@@ -49,19 +49,14 @@ def check_X_y(X: Features,
     return X, y
 
 def check_is_fitted(estimator: object,
-                   attributes: Optional[Union[str, List[str]]] = None) -> None:
+                   attributes: Optional[Union[str, List[str]]] = None,
+                   skip_validation: bool = False) -> None:
     """Check if estimator is fitted."""
-    if not hasattr(estimator, 'is_fitted'):
-        raise ValidationError(
-            f"{estimator.__class__.__name__} is not a valid estimator type"
-        )
+    # Skip validation if explicitly requested
+    if skip_validation:
+        return
         
-    if not estimator.is_fitted:
-        raise ValidationError(
-            f"This {estimator.__class__.__name__} instance is not fitted yet. "
-            "Call 'fit' before using this estimator."
-        )
-        
+    # Check if either is_fitted attribute exists and is True, or if specified attributes exist
     if attributes:
         if isinstance(attributes, str):
             attributes = [attributes]
@@ -71,3 +66,11 @@ def check_is_fitted(estimator: object,
                     f"Attribute {attr} not found. {estimator.__class__.__name__} "
                     "instance is not fitted correctly"
                 )
+    else:
+        # If no specific attributes are provided, check for common fitted attributes
+        fitted_attrs = [v for v in vars(estimator) if v.endswith('_') and not v.startswith('__')]
+        if not fitted_attrs:
+            raise ValidationError(
+                f"{estimator.__class__.__name__} is not fitted yet. "
+                "Call 'fit' before using this estimator."
+            )

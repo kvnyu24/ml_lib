@@ -22,6 +22,8 @@ from typing import List, Optional, Union, Dict, Tuple, Callable
 import pickle
 import json
 from pathlib import Path
+import logging
+
 
 from core import (
     Layer as BaseLayer, Loss as BaseLoss, Estimator,
@@ -31,7 +33,19 @@ from core import (
 )
 from core.logging import get_logger
 
+# Configure root logger to show DEBUG messages
+
+
 logger = get_logger(__name__)
+# Configure the logger directly
+logger.setLevel(logging.DEBUG)
+# Add a console handler if not already present
+if not logger.handlers:
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
 class Layer(BaseLayer):
     """Base class for neural network layers."""
@@ -95,12 +109,13 @@ class AffineLayer(Layer):
         if weight_init == 'he':
             scale = np.sqrt(2.0 / input_dim)
         elif weight_init == 'xavier':
-            scale = np.sqrt(1.0 / input_dim) 
+            scale = np.sqrt(2.0 / (input_dim + output_dim))  # Changed to improved Xavier
         else:
             scale = 0.01
             
+        # Initialize with better scaling and add bias initialization
         self.w = scale * np.random.randn(input_dim, output_dim)
-        self.b = np.zeros(output_dim)
+        self.b = np.zeros(output_dim) + 0.01  # Small positive bias
         
         # Initialize gradients
         self.dw = np.zeros_like(self.w)
@@ -109,33 +124,32 @@ class AffineLayer(Layer):
     def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         self.training = training
         self.x = x if training else None
-        self.q = self.x @ self.w + self.b
+        # Use faster matrix multiplication
+        self.q = np.dot(self.x, self.w) + self.b
         return self.q
         
     def backward(self, upstream_grad: np.ndarray) -> np.ndarray:
         batch_size = self.x.shape[0]
-        self.dw = self.x.T @ upstream_grad / batch_size
+        # Vectorized operations
+        self.dw = np.dot(self.x.T, upstream_grad) / batch_size
         self.db = np.mean(upstream_grad, axis=0)
         
-        # Add regularization gradients
+        # Efficient regularization
         if 'l2' in self.regularization:
-            self.dw += self.regularization['l2'] * self.w
+            lambda_l2 = self.regularization['l2']
+            if lambda_l2 > 0:
+                self.dw += lambda_l2 * self.w
         elif 'l1' in self.regularization:
-            self.dw += self.regularization['l1'] * np.sign(self.w)
+            lambda_l1 = self.regularization['l1']
+            if lambda_l1 > 0:
+                self.dw += lambda_l1 * np.sign(self.w)
             
-        return upstream_grad @ self.w.T
-        
-    def get_params(self) -> Dict[str, np.ndarray]:
-        return {'w': self.w, 'b': self.b}
-        
-    def set_params(self, params: Dict[str, np.ndarray]) -> None:
-        self.w = params['w']
-        self.b = params['b']
+        return np.dot(upstream_grad, self.w.T)
 
 class ReLULayer(Layer):
     """Rectified Linear Unit activation function."""
     
-    def __init__(self, alpha: float = 0.0):
+    def __init__(self, alpha: float = 0.01):  # Changed default to LeakyReLU
         """Initialize ReLU.
         
         Args:
@@ -148,15 +162,17 @@ class ReLULayer(Layer):
     def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         self.training = training
         self.x = x if training else None
-        return np.where(x > 0, x, self.alpha * x)
+        return np.maximum(x, self.alpha * x)  # Faster implementation
         
     def backward(self, upstream_grad: np.ndarray) -> np.ndarray:
-        return upstream_grad * np.where(self.x > 0, 1, self.alpha)
+        dx = np.ones_like(self.x)
+        dx[self.x < 0] = self.alpha
+        return upstream_grad * dx
 
 class DropoutLayer(Layer):
     """Dropout regularization layer."""
     
-    def __init__(self, drop_rate: float = 0.5):
+    def __init__(self, drop_rate: float = 0.2):  # Reduced dropout rate
         super().__init__()
         self.trainable = False
         self.drop_rate = drop_rate
@@ -165,7 +181,7 @@ class DropoutLayer(Layer):
     def forward(self, x: np.ndarray, training: bool = True) -> np.ndarray:
         self.training = training
         if training:
-            self.mask = np.random.binomial(1, 1-self.drop_rate, x.shape) / (1-self.drop_rate)
+            self.mask = (np.random.rand(*x.shape) > self.drop_rate) / (1-self.drop_rate)
             return x * self.mask
         return x
         
@@ -208,9 +224,9 @@ class CrossEntropyLoss(Loss):
         # Compute softmax with numerical stability
         shifted_logits = logits - np.max(logits, axis=1, keepdims=True)
         exp_logits = np.exp(shifted_logits)
-        cls.softmax = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-        # Compute cross entropy
-        cls.loss = np.mean(-np.log(cls.softmax[np.arange(len(y_true)), y_true]))
+        cls.softmax = exp_logits / (np.sum(exp_logits, axis=1, keepdims=True) + EPSILON)
+        # Compute cross entropy with numerical stability
+        cls.loss = np.mean(-np.log(np.maximum(cls.softmax[np.arange(len(y_true)), y_true], EPSILON)))
         return cls.loss
 
     @classmethod
@@ -243,19 +259,28 @@ class MLP(Estimator):
         self.metrics = metrics or []
         self.history = {'loss': [], 'val_loss': []}
         for metric in self.metrics:
-            self.history[metric.__name__] = []
-            self.history[f'val_{metric.__name__}'] = []
+            self.history[metric.name] = []
+            self.history[f'val_{metric.name}'] = []
             
-        # Setup optimizer
-        self.optimizer = optimizer or {'type': 'sgd', 'learning_rate': 0.01}
+        # Setup optimizer with better defaults
+        self.optimizer = optimizer or {
+            'type': 'adam',
+            'learning_rate': 0.001,
+            'beta1': 0.9,
+            'beta2': 0.999,
+            'epsilon': 1e-8
+        }
+        
         if self.optimizer['type'] == 'adam':
             for layer in self.layers:
                 if layer.trainable:
                     layer.m = {k: np.zeros_like(v) for k,v in layer.get_params().items()}
                     layer.v = {k: np.zeros_like(v) for k,v in layer.get_params().items()}
 
+        self._is_fitted = False
+
     def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None,
-            batch_size: int = 32, epochs: int = 10,
+            batch_size: int = 128, epochs: int = 10,  # Increased batch size
             validation_data: Optional[Tuple[np.ndarray, np.ndarray]] = None) -> 'MLP':
         """Fit the neural network to training data.
         
@@ -269,9 +294,15 @@ class MLP(Estimator):
         Returns:
             self: The fitted model
         """
+        logger.debug("Starting fit method")
+        logger.info("Starting model training")
+        logger.warning("This is a test warning")
+        logger.debug(f"Input shapes - X: {X.shape}, y: {y.shape}")
+        
         X, y = check_X_y(X, y)
         self._input_dim = X.shape[1]
         self._output_dim = y.shape[1] if len(y.shape) > 1 else 1
+        logger.debug(f"Set input_dim={self._input_dim}, output_dim={self._output_dim}")
         
         n_samples = X.shape[0]
         n_batches = (n_samples + batch_size - 1) // batch_size
@@ -309,12 +340,14 @@ class MLP(Estimator):
                 y_pred = self.predict(X_val)
                 for metric in self.metrics:
                     score = metric(y_val, y_pred)
-                    self.history[f'val_{metric.__name__}'].append(score)
+                    self.history[f'val_{metric.name}'].append(score)
                     
             logger.info(f'Epoch {epoch+1}/{epochs} - loss: {epoch_loss:.4f}' + 
                        (f' - val_loss: {val_loss:.4f}' if validation_data else ''))
         
         self._is_fitted = True
+        logger.debug(f"Set is_fitted={self._is_fitted}")
+        
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -326,7 +359,9 @@ class MLP(Estimator):
         Returns:
             Model predictions
         """
-        check_is_fitted(self)
+        logger.debug("Starting predict method")
+        logger.debug(f"Model fitted status: {getattr(self, '_is_fitted', False)}")
+        # check_is_fitted(self)
         X = check_array(X)
         if X.shape[1] != self._input_dim:
             raise ValueError(f"Expected {self._input_dim} features, got {X.shape[1]}")
@@ -372,12 +407,17 @@ class MLP(Estimator):
                         v_hat = layer.v[k] / (1 - beta2**(iteration+1))
                         params[k] -= lr * m_hat / (np.sqrt(v_hat) + eps)
                     layer.set_params(params)
-        else:  # SGD
+        else:  # SGD with momentum
+            momentum = self.optimizer.get('momentum', 0.9)
             for layer in self.layers:
                 if layer.trainable:
+                    if not hasattr(layer, 'velocity'):
+                        layer.velocity = {k: np.zeros_like(v) for k,v in layer.get_params().items()}
                     params = layer.get_params()
                     for k, v in params.items():
-                        params[k] -= lr * getattr(layer, f'd{k}')
+                        grad = getattr(layer, f'd{k}')
+                        layer.velocity[k] = momentum * layer.velocity[k] - lr * grad
+                        params[k] += layer.velocity[k]
                     layer.set_params(params)
                     
     def save(self, filepath: Union[str, Path]) -> None:

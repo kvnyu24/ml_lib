@@ -9,7 +9,7 @@ from sklearn.datasets import fetch_openml
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from models.neural import MLP, Dense, CrossEntropyLoss, ReLU, Softmax
-from core import EarlyStopping
+from core import EarlyStopping, Accuracy
 from preprocessing import StandardScaler, OneHotEncoder
 
 def load_mnist():
@@ -58,8 +58,9 @@ def main():
     model = MLP(
         layers=layers,
         loss_function=CrossEntropyLoss,
-        optimizer={'type': 'adam', 'learning_rate': 0.001},
-        metrics=[EarlyStopping(patience=5, min_delta=0.001)]
+        optimizer={'type': 'SGD', 'learning_rate': 0.1},
+        metrics=[Accuracy()]
+        # callback=[EarlyStopping(patience=5, min_delta=0.001)]
     )
 
     # Train model
