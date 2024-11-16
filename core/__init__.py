@@ -12,7 +12,8 @@ from .callbacks import Callback, EarlyStopping, ModelCheckpoint
 from .logging import get_logger, TrainingLogger
 from .metrics import (
     Metric, Accuracy, MSE, MAE,
-    get_metric, MetricList, R2Score, ImpurityMetric, Entropy, GiniImpurity, information_gain, gain_ratio, euclidean_distance    
+    get_metric, MetricList, R2Score, ImpurityMetric, Entropy, GiniImpurity, information_gain, gain_ratio, euclidean_distance,
+    roc_curve, precision_recall_curve
 )
 from .dtypes import (
     Number, Array, Features, Target,
@@ -45,13 +46,14 @@ __all__ = [
     
     # Metrics
     'Metric', 'Accuracy', 'MSE', 'MAE',
-    'get_metric', 'MetricList',
+    'get_metric', 'MetricList', 'R2Score', 'ImpurityMetric', 'Entropy', 'GiniImpurity', 'information_gain', 'gain_ratio', 'euclidean_distance',
+    'roc_curve', 'precision_recall_curve',
     
     # Types and Constants
     'Number', 'Array', 'Features', 'Target',
     'EPSILON', 'DEFAULT_RANDOM_STATE',
     'SUPPORTED_OPTIMIZERS', 'SUPPORTED_ACTIVATIONS', 'SUPPORTED_LOSSES',
-    'DEFAULT_OPTIMIZER_CONFIG', 'DEFAULT_TRAINING_CONFIG'
+    'DEFAULT_OPTIMIZER_CONFIG', 'DEFAULT_TRAINING_CONFIG',
 
 
     # Data

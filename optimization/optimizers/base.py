@@ -25,13 +25,17 @@ class Adam(Optimizer):
         self.beta1 = beta1
         self.beta2 = beta2
         self.epsilon = epsilon
-        self._state['m'] = None  # First moment
-        self._state['v'] = None  # Second moment
+        self._state = {}  # Initialize empty state dict
+        
+    def initialize(self, param_shape: tuple) -> None:
+        """Initialize optimizer state with the right shapes."""
+        self._state['m'] = np.zeros(param_shape)  # First moment
+        self._state['v'] = np.zeros(param_shape)  # Second moment
+        self._iteration = 1  # Start from 1 to avoid division by zero
         
     def compute_update(self, params: np.ndarray, gradients: np.ndarray) -> np.ndarray:
         if 'm' not in self._state:
-            self._state['m'] = np.zeros_like(params)
-            self._state['v'] = np.zeros_like(params)
+            self.initialize(params.shape)
             
         m = self._state['m']
         v = self._state['v']
@@ -44,5 +48,6 @@ class Adam(Optimizer):
         
         self._state['m'] = m
         self._state['v'] = v
+        self._iteration += 1
         
         return params - self.learning_rate * m_hat / (np.sqrt(v_hat) + self.epsilon)

@@ -17,6 +17,10 @@ class StandardScaler(Transformer):
         """Compute mean and std to be used for scaling."""
         X = check_array(X)
         
+        # Validate input array is not empty
+        if X.shape[0] == 0:
+            raise ValueError("Cannot fit StandardScaler with empty array")
+        
         if self.with_mean:
             self.mean_ = np.mean(X, axis=0)
         if self.with_std:
@@ -28,6 +32,14 @@ class StandardScaler(Transformer):
     def transform(self, X: np.ndarray) -> np.ndarray:
         """Perform standardization."""
         X = check_array(X)
+        
+        # Validate input array is not empty
+        if X.shape[0] == 0:
+            raise ValueError("Cannot transform empty array")
+        
+        # Validate scaler has been fitted
+        if not hasattr(self, 'scale_') or not hasattr(self, 'mean_'):
+            raise ValueError("StandardScaler is not fitted yet. Call fit before using this method.")
         
         if self.with_mean:
             X = X - self.mean_

@@ -152,6 +152,29 @@ class ModelEvaluator:
                 
         return results
 
+    def evaluate(self, model: Any, X: np.ndarray, y: np.ndarray, 
+                metrics: List[str] = ['mse', 'mae', 'r2']) -> Dict[str, float]:
+        """Evaluate model performance on test data.
+        
+        Args:
+            model: Fitted model instance
+            X: Test features
+            y: Test targets
+            metrics: List of metric names to compute
+            
+        Returns:
+            Dictionary of metric names and values
+        """
+        check_is_fitted(model)
+        y_pred = model.predict(X)
+        
+        results = {}
+        for metric_name in metrics:
+            metric = get_metric(metric_name)
+            results[metric_name] = metric(y, y_pred)
+            
+        return results
+
 class ModelSelector:
     """Model selection and hyperparameter optimization."""
     

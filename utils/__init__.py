@@ -5,14 +5,15 @@ from .io import (
     save_data,
     load_model,
     save_model,
-    export_results
 )
 
 from .visualization import (
-    plot_learning_curve,
+    plot_learning_curves,
     plot_confusion_matrix,
     plot_feature_importance,
-    plot_decision_boundary
+    plot_decision_boundary,
+    plot_roc_curve,
+    plot_precision_recall_curve
 )
 
 from .decorators import (
@@ -44,7 +45,6 @@ __all__ = [
     'save_data', 
     'load_model',
     'save_model',
-    'export_results',
     
     # Visualization
     'plot_learning_curve',

@@ -1,7 +1,7 @@
 """Evaluation metrics and scoring functions."""
 
 import numpy as np
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union, Tuple
 from .dtypes import Number, Array
 from .exceptions import ValidationError
 
@@ -220,6 +220,78 @@ class MetricList:
                 results[metric.name] = None
         return results
 
+def roc_curve(y_true: np.ndarray, y_pred: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute Receiver Operating Characteristic (ROC) curve.
+    
+    Args:
+        y_true: Ground truth binary labels
+        y_pred: Predicted probabilities or scores
+        
+    Returns:
+        fpr: False positive rates
+        tpr: True positive rates
+        thresholds: Thresholds used for computing FPR/TPR
+    """
+    _validate_inputs(y_true, y_pred)
+    
+    # Sort scores and corresponding truth values
+    desc_score_indices = np.argsort(y_pred, kind="mergesort")[::-1]
+    y_pred = y_pred[desc_score_indices]
+    y_true = y_true[desc_score_indices]
+
+    # Get unique decision thresholds
+    thresholds = np.unique(y_pred)
+    
+    tpr = np.zeros(thresholds.shape[0])
+    fpr = np.zeros(thresholds.shape[0])
+    
+    n_pos = np.sum(y_true == 1)
+    n_neg = len(y_true) - n_pos
+    
+    for i, threshold in enumerate(thresholds):
+        y_pred_bin = y_pred >= threshold
+        tpr[i] = np.sum((y_true == 1) & (y_pred_bin == 1)) / n_pos
+        fpr[i] = np.sum((y_true == 0) & (y_pred_bin == 1)) / n_neg
+        
+    return fpr, tpr, thresholds
+
+def precision_recall_curve(y_true: np.ndarray, y_pred: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute precision-recall curve.
+    
+    Args:
+        y_true: Ground truth binary labels
+        y_pred: Predicted probabilities or scores
+        
+    Returns:
+        precision: Precision values
+        recall: Recall values
+        thresholds: Thresholds used for computing precision/recall
+    """
+    _validate_inputs(y_true, y_pred)
+    
+    # Sort scores and corresponding truth values
+    desc_score_indices = np.argsort(y_pred, kind="mergesort")[::-1]
+    y_pred = y_pred[desc_score_indices]
+    y_true = y_true[desc_score_indices]
+    
+    # Get unique decision thresholds
+    thresholds = np.unique(y_pred)
+    
+    precision = np.zeros(thresholds.shape[0])
+    recall = np.zeros(thresholds.shape[0])
+    
+    n_pos = np.sum(y_true == 1)
+    
+    for i, threshold in enumerate(thresholds):
+        y_pred_bin = y_pred >= threshold
+        true_pos = np.sum((y_true == 1) & (y_pred_bin == 1))
+        false_pos = np.sum((y_true == 0) & (y_pred_bin == 1))
+        
+        precision[i] = true_pos / (true_pos + false_pos) if (true_pos + false_pos) > 0 else 1.0
+        recall[i] = true_pos / n_pos
+        
+    return precision, recall, thresholds
+
 # Update __all__ list
 __all__ = [
     'Metric',
@@ -232,5 +304,7 @@ __all__ = [
     'MisclassificationError',
     'information_gain',
     'gain_ratio',
-    'euclidean_distance'
+    'euclidean_distance',
+    'roc_curve',
+    'precision_recall_curve'
 ]

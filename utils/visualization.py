@@ -166,6 +166,77 @@ def plot_precision_recall_curve(y_true: np.ndarray,
         logger.error(f"Error plotting precision-recall curve: {str(e)}")
         raise
 
+def plot_confusion_matrix(cm: np.ndarray,
+                         classes: List[str],
+                         normalize: bool = False,
+                         title: Optional[str] = None,
+                         figsize: Tuple[int, int] = (10, 8),
+                         save_path: Optional[str] = None) -> None:
+    """Plot confusion matrix.
+    
+    Args:
+        cm: Confusion matrix array
+        classes: List of class labels
+        normalize: Whether to normalize values
+        title: Plot title (optional)
+        figsize: Figure dimensions
+        save_path: Path to save figure (optional)
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    
+    plt.figure(figsize=figsize)
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title(title or 'Confusion Matrix', fontsize=14)
+    plt.colorbar()
+    
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+    
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in np.ndindex(cm.shape):
+        plt.text(j, i, format(cm[i, j], fmt),
+                horizontalalignment="center",
+                color="white" if cm[i, j] > thresh else "black")
+    
+    plt.ylabel('True label', fontsize=12)
+    plt.xlabel('Predicted label', fontsize=12)
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path)
+    plt.show()
+
+def plot_feature_importance(importance: np.ndarray,
+                          feature_names: List[str],
+                          title: Optional[str] = None,
+                          figsize: Tuple[int, int] = (10, 6),
+                          save_path: Optional[str] = None) -> None:
+    """Plot feature importance scores.
+    
+    Args:
+        importance: Array of feature importance scores
+        feature_names: List of feature names
+        title: Plot title (optional)
+        figsize: Figure dimensions
+        save_path: Path to save figure (optional)
+    """
+    indices = np.argsort(importance)[::-1]
+    
+    plt.figure(figsize=figsize)
+    plt.title(title or 'Feature Importances', fontsize=14)
+    plt.bar(range(len(importance)), importance[indices])
+    plt.xticks(range(len(importance)), [feature_names[i] for i in indices], rotation=45, ha='right')
+    plt.xlabel('Features', fontsize=12)
+    plt.ylabel('Importance', fontsize=12)
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path)
+    plt.show()
+
 class DistanceVisualizer:
     """Visualization tools for distance analysis."""
     

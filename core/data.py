@@ -16,17 +16,39 @@ class Dataset:
     
     def split(self, test_size: float = 0.2, val_size: float = 0.2,
              random_state: int = 42) -> Tuple['Dataset', 'Dataset', 'Dataset']:
+        
         """Split into train, validation and test sets."""
+        # Add validation checks before splitting
+        if self.X.shape[0] == 0 or self.y.shape[0] == 0:
+            raise ValueError("Cannot split empty dataset")
+            
+        if not isinstance(self.X, np.ndarray) or not isinstance(self.y, np.ndarray):
+            raise TypeError("X and y must be numpy arrays")
+            
+        print("Original data shapes - X:", self.X.shape, "y:", self.y.shape)
+        
         X_train, X_test, y_train, y_test = train_test_split(
             self.X, self.y, test_size=test_size, 
-            random_state=random_state, stratify=self.y
+            random_state=random_state, stratify=None
         )
+        
+        print("After first split - X_train:", X_train.shape, "X_test:", X_test.shape)
+        
+        # Validate first split results
+        if X_train.shape[0] == 0 or y_train.shape[0] == 0:
+            raise ValueError("First split resulted in empty training set")
         
         X_train, X_val, y_train, y_val = train_test_split(
             X_train, y_train, test_size=val_size,
-            random_state=random_state, stratify=y_train
+            random_state=random_state, stratify=None
         )
         
+        print("After second split - X_train:", X_train.shape, "X_val:", X_val.shape)
+        
+        # Validate second split results
+        if X_train.shape[0] == 0 or y_train.shape[0] == 0:
+            raise ValueError("Second split resulted in empty training set")
+            
         return (Dataset(X_train, y_train, self.feature_names, self.target_names),
                 Dataset(X_val, y_val, self.feature_names, self.target_names),
                 Dataset(X_test, y_test, self.feature_names, self.target_names))
@@ -44,38 +66,68 @@ def train_test_split(X: np.ndarray, y: np.ndarray,
                     random_state: Optional[int] = None,
                     stratify: Optional[np.ndarray] = None) -> Tuple[np.ndarray, ...]:
     """Split arrays into train and test subsets with optional stratification."""
+    # Input validation
+    if not isinstance(X, np.ndarray) or not isinstance(y, np.ndarray):
+        raise TypeError("X and y must be numpy arrays")
+        
+    if X.shape[0] != y.shape[0]:
+        raise ValueError(f"X and y must have same number of samples. Got X: {X.shape[0]}, y: {y.shape[0]}")
+        
     if random_state is not None:
         np.random.seed(random_state)
         
+    print("Input shapes - X:", X.shape, "y:", y.shape)
+        
     n_samples = len(y)
-    n_test = int(n_samples * test_size)
+    if n_samples == 0:
+        raise ValueError("Cannot split empty array")
+        
+    n_test = int(np.ceil(n_samples * test_size))
+    n_train = n_samples - n_test
+    
+    if n_train == 0:
+        raise ValueError(f"test_size={test_size} is too large, would result in empty training set")
     
     if stratify is not None:
         # Get unique classes and their indices
         classes, class_indices = np.unique(stratify, return_inverse=True)
+        n_classes = len(classes)
         
-        # Split indices for each class proportionally
-        train_idx = []
-        test_idx = []
-        
-        for c in classes:
-            c_idx = np.where(class_indices == c)[0]
-            n_c_test = int(len(c_idx) * test_size)
+        if n_classes < 2:
+            stratify = None
+        else:
+            # Initialize index arrays
+            train_idx = []
+            test_idx = []
             
-            # Shuffle indices
-            c_idx = np.random.permutation(c_idx)
+            # Split each class proportionally
+            for c in range(n_classes):
+                c_idx = np.where(class_indices == c)[0]
+                n_c_samples = len(c_idx)
+                n_c_test = max(1, int(np.floor(n_c_samples * test_size)))
+                n_c_train = n_c_samples - n_c_test
+                
+                # Shuffle indices for this class
+                np.random.shuffle(c_idx)
+                
+                # Split indices for this class
+                test_idx.extend(c_idx[:n_c_test])
+                train_idx.extend(c_idx[n_c_test:])
             
-            test_idx.extend(c_idx[:n_c_test])
-            train_idx.extend(c_idx[n_c_test:])
+            # Convert to numpy arrays and shuffle
+            train_idx = np.array(train_idx, dtype=int)
+            test_idx = np.array(test_idx, dtype=int)
+            np.random.shuffle(train_idx)
+            np.random.shuffle(test_idx)
             
-        train_idx = np.array(train_idx)
-        test_idx = np.array(test_idx)
-    else:
-        indices = np.random.permutation(n_samples)
-        test_idx = indices[:n_test]
-        train_idx = indices[n_test:]
+            return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
     
-    return (X[train_idx], X[test_idx], y[train_idx], y[test_idx])
+    # If no stratification, use simple random sampling
+    indices = np.random.permutation(n_samples)
+    train_idx = indices[:n_train]
+    test_idx = indices[n_train:]
+    
+    return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
 
 def mutual_information(X: np.ndarray, y: np.ndarray) -> np.ndarray:
     """Calculate mutual information between features and target."""
