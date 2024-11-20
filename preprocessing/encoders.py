@@ -1,7 +1,7 @@
 """Feature encoding utilities."""
 
 import numpy as np
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 from core import (
     Transformer,
     check_array,
@@ -122,7 +122,7 @@ class TargetEncoder(Transformer):
     def __init__(self, smoothing: float = 10.0):
         self.smoothing = smoothing
         self.encodings_: Optional[List[Dict]] = None
-        self.global_mean_: Optional[float] = None
+        self.global_mean_: Optional[Union[float, np.floating]] = None
         
     def fit(self, X: np.ndarray, y: np.ndarray) -> 'TargetEncoder':
         """Fit target encoder."""

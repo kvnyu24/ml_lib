@@ -1,7 +1,7 @@
 """Feature engineering utilities."""
 
 import numpy as np
-from typing import Optional, List, Union, Callable
+from typing import Optional, List, Union, Callable, Tuple
 from itertools import combinations, combinations_with_replacement
 from core import (
     Transformer,
@@ -20,8 +20,8 @@ class PolynomialFeatures(Transformer):
             raise ValidationError("degree must be a non-negative integer")
         self.degree = degree
         self.interaction_only = interaction_only
-        self.n_output_features_ = None
-        self.powers_ = None
+        self.n_output_features_: Optional[int] = None
+        self.powers_: Optional[List[np.ndarray]] = None
         
     def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'PolynomialFeatures':
         """Compute number of output features and powers."""
@@ -50,7 +50,7 @@ class PolynomialFeatures(Transformer):
         X = check_array(X)
         n_samples = X.shape[0]
         
-        if self.powers_ is None:
+        if self.powers_ is None or self.n_output_features_ is None:
             raise ValidationError("PolynomialFeatures must be fitted before transform")
             
         X_new = np.empty((n_samples, self.n_output_features_), dtype=X.dtype)
@@ -63,22 +63,31 @@ class PolynomialFeatures(Transformer):
 class InteractionFeatures(Transformer):
     """Generate interaction features between specified columns."""
     
-    def __init__(self, interaction_pairs: Optional[List[tuple]] = None, 
+    def __init__(self, interaction_pairs: Optional[List[Tuple[int, int]]] = None, 
                  interaction_type: str = 'multiply'):
         """
         Args:
             interaction_pairs: List of tuples containing column indices to interact
             interaction_type: Type of interaction - 'multiply', 'add', 'subtract', or 'divide'
         """
+        valid_types = {'multiply', 'add', 'subtract', 'divide'}
+        if interaction_type not in valid_types:
+            raise ValidationError(f"interaction_type must be one of: {', '.join(valid_types)}")
+
         self.interaction_pairs = interaction_pairs
         self.interaction_type = interaction_type
-        self._interaction_func = {
+        self._interaction_func = None
+        self._set_interaction_func()
+        
+    def _set_interaction_func(self):
+        """Set the interaction function based on interaction type."""
+        interaction_funcs = {
             'multiply': np.multiply,
             'add': np.add,
             'subtract': np.subtract,
             'divide': np.divide
-        }.get(interaction_type)
-        
+        }
+        self._interaction_func = interaction_funcs.get(self.interaction_type)
         if self._interaction_func is None:
             raise ValidationError("interaction_type must be one of: multiply, add, subtract, divide")
         
@@ -104,13 +113,36 @@ class InteractionFeatures(Transformer):
         X = check_array(X)
         n_samples = X.shape[0]
         
+        if self.interaction_pairs is None:
+            raise ValidationError("InteractionFeatures must be fitted before transform")
+        
         # Original features plus interaction features
-        X_new = np.empty((n_samples, X.shape[1] + len(self.interaction_pairs)))
+        n_interactions = len(self.interaction_pairs)
+        X_new = np.empty((n_samples, X.shape[1] + n_interactions))
         X_new[:, :X.shape[1]] = X
         
+        # Add error checking for division by zero and overflow
         for i, (col1, col2) in enumerate(self.interaction_pairs):
-            X_new[:, X.shape[1] + i] = self._interaction_func(X[:, col1], X[:, col2])
-            
+            try:
+                if self.interaction_type == 'divide':
+                    # Handle division by zero
+                    denominator = X[:, col2]
+                    # Replace zeros with small epsilon to avoid division by zero
+                    denominator = np.where(denominator == 0, np.finfo(float).eps, denominator)
+                    X_new[:, X.shape[1] + i] = X[:, col1] / denominator
+                else:
+                    X_new[:, X.shape[1] + i] = self._interaction_func(X[:, col1], X[:, col2])
+                
+                # Check for overflow/underflow
+                if np.any(~np.isfinite(X_new[:, X.shape[1] + i])):
+                    logger.warning(f"Interaction between columns {col1} and {col2} produced infinite/NaN values")
+                    # Replace inf/nan with max/min finite values
+                    X_new[:, X.shape[1] + i] = np.nan_to_num(X_new[:, X.shape[1] + i])
+                    
+            except Exception as e:
+                logger.error(f"Error computing interaction between columns {col1} and {col2}: {str(e)}")
+                raise
+                
         return X_new
 
 class CustomFeatureTransformer(Transformer):
@@ -126,7 +158,7 @@ class CustomFeatureTransformer(Transformer):
         """
         self.transformations = transformations
         self.columns = columns
-        self._transform_funcs = []
+        self._transform_funcs: List[Callable] = []
         
         # Map common transformation names to functions
         transform_map = {
@@ -160,6 +192,9 @@ class CustomFeatureTransformer(Transformer):
         X = check_array(X)
         X_new = X.copy()
         
+        if self.columns is None:
+            raise ValidationError("CustomFeatureTransformer must be fitted before transform")
+            
         for col in self.columns:
             for func in self._transform_funcs:
                 try:

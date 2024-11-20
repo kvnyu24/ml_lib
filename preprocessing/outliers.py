@@ -26,16 +26,25 @@ class IQROutlierDetector(OutlierDetector):
     
     def __init__(self, contamination: float = 0.1):
         super().__init__(contamination)
-        self.q1_ = None
-        self.q3_ = None
-        self.iqr_ = None
+        self.q1_: Optional[np.ndarray] = None
+        self.q3_: Optional[np.ndarray] = None 
+        self.iqr_: Optional[np.ndarray] = None
         
     def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'IQROutlierDetector':
         """Compute IQR statistics."""
         X = check_array(X)
+
+        if X.size == 0:
+            raise ValueError("Input array X cannot be empty")
+
+        # Calculate statistics in one go to avoid None subtraction
+        quartiles = np.percentile(X, [25, 75], axis=0)
+        if quartiles is None or np.any(np.isnan(quartiles)):
+            raise ValueError("Could not compute quartiles - check input data")
+
         
-        self.q1_ = np.percentile(X, 25, axis=0)
-        self.q3_ = np.percentile(X, 75, axis=0)
+        self.q1_ = quartiles[0]
+        self.q3_ = quartiles[1]
         self.iqr_ = self.q3_ - self.q1_
         
         return self
@@ -44,6 +53,9 @@ class IQROutlierDetector(OutlierDetector):
         """Predict outliers using IQR method."""
         X = check_array(X)
         
+        if self.q1_ is None or self.q3_ is None or self.iqr_ is None:
+            raise ValueError("Detector must be fitted before calling predict")
+            
         lower_bound = self.q1_ - 1.5 * self.iqr_
         upper_bound = self.q3_ + 1.5 * self.iqr_
         
@@ -57,8 +69,8 @@ class IsolationForest(OutlierDetector):
         super().__init__(contamination)
         self.n_trees = n_trees
         self.max_samples = max_samples
-        self.trees_ = []
-        self.threshold_ = None
+        self.trees_: List[dict] = []
+        self.threshold_: Optional[float] = None
         
     def _build_tree(self, X: np.ndarray, height_limit: int) -> dict:
         """Build a single isolation tree."""
@@ -107,7 +119,7 @@ class IsolationForest(OutlierDetector):
             
         # Compute threshold
         scores = -self.score_samples(X)
-        self.threshold_ = np.percentile(scores, 100 * (1 - self.contamination))
+        self.threshold_ = float(np.percentile(scores, 100 * (1 - self.contamination)))
         
         return self
         
@@ -125,6 +137,9 @@ class IsolationForest(OutlierDetector):
         
     def predict(self, X: np.ndarray) -> np.ndarray:
         """Predict if instances are outliers."""
+        if self.threshold_ is None:
+            raise ValueError("Detector must be fitted before calling predict")
+            
         scores = self.score_samples(X)
         return scores >= self.threshold_
 
@@ -134,9 +149,9 @@ class LocalOutlierFactor(OutlierDetector):
     def __init__(self, contamination: float = 0.1, n_neighbors: int = 20):
         super().__init__(contamination)
         self.n_neighbors = n_neighbors
-        self.X_ = None
-        self.threshold_ = None
-        self.lrd_ = None
+        self.X_: Optional[np.ndarray] = None
+        self.threshold_: Optional[float] = None
+        self.lrd_: Optional[np.ndarray] = None
         
     def _distances(self, X1: np.ndarray, X2: np.ndarray) -> np.ndarray:
         """Compute pairwise Euclidean distances."""
@@ -175,7 +190,7 @@ class LocalOutlierFactor(OutlierDetector):
             neighbors = k_neighbors[i]
             scores[i] = np.mean(self.lrd_[neighbors]) / self.lrd_[i]
             
-        self.threshold_ = np.percentile(scores, 100 * (1 - self.contamination))
+        self.threshold_ = float(np.percentile(scores, 100 * (1 - self.contamination)))
         
         return self
         
@@ -183,6 +198,9 @@ class LocalOutlierFactor(OutlierDetector):
         """Predict if instances are outliers."""
         X = check_array(X)
         
+        if self.X_ is None or self.lrd_ is None or self.threshold_ is None:
+            raise ValueError("Detector must be fitted before calling predict")
+            
         # Compute distances to training points
         distances = self._distances(X, self.X_)
         k_distances = self._k_distance(distances)

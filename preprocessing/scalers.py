@@ -1,6 +1,7 @@
 """Data scaling and normalization utilities."""
 
 import numpy as np
+from scipy.special import erfinv
 from typing import Optional, Union, Dict
 from core import Transformer, check_array
 
@@ -30,23 +31,16 @@ class StandardScaler(Transformer):
         return self
         
     def transform(self, X: np.ndarray) -> np.ndarray:
-        """Perform standardization."""
+        """Standardize features."""
         X = check_array(X)
+        X_transformed = X.copy()
         
-        # Validate input array is not empty
-        if X.shape[0] == 0:
-            raise ValueError("Cannot transform empty array")
-        
-        # Validate scaler has been fitted
-        if not hasattr(self, 'scale_') or not hasattr(self, 'mean_'):
-            raise ValueError("StandardScaler is not fitted yet. Call fit before using this method.")
-        
-        if self.with_mean:
-            X = X - self.mean_
-        if self.with_std:
-            X = X / self.scale_
+        if self.with_mean and self.mean_ is not None:
+            X_transformed -= self.mean_
+        if self.with_std and self.scale_ is not None:
+            X_transformed /= self.scale_
             
-        return X
+        return X_transformed
 
 class MinMaxScaler(Transformer):
     """Scale features to a given range."""
@@ -137,20 +131,24 @@ class QuantileScaler(Transformer):
             
         self.references_ = np.linspace(0, 1, self.n_quantiles)
         if self.output_distribution == 'normal':
-            self.references_ = np.sqrt(2) * np.erfinv(2 * self.references_ - 1)
+            self.references_ = np.sqrt(2) * erfinv(2 * self.references_ - 1)
             
         return self
         
     def transform(self, X: np.ndarray) -> np.ndarray:
         """Transform features using quantile transformation."""
         X = check_array(X)
+
+        if self.quantiles_ is None or self.references_ is None:
+            raise ValueError("QuantileScaler must be fitted before calling transform")
+
         X_transformed = np.zeros_like(X)
         
         for feature_idx in range(X.shape[1]):
             X_transformed[:, feature_idx] = np.interp(
-                X[:, feature_idx],
-                self.quantiles_[feature_idx],
-                self.references_
+                X[:, feature_idx].ravel(),  # Input x-coordinates
+                np.array(self.quantiles_[feature_idx]).ravel(),  # Reference x-coordinates
+                np.array(self.references_).ravel()  # Reference y-coordinates
             )
             
         return X_transformed
