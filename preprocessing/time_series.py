@@ -6,7 +6,8 @@ from core import (
     Transformer,
     check_array,
     EPSILON,
-    get_logger
+    get_logger,
+    ValidationError
 )
 
 class TimeSeriesScaler(Transformer):
@@ -37,8 +38,12 @@ class TimeSeriesScaler(Transformer):
     def transform(self, X: np.ndarray) -> np.ndarray:
         """Scale time series data."""
         X = check_array(X)
-        rolling_mean, rolling_std = self.statistics_
+    
+        if self.statistics_ is None:
+            raise ValidationError("TimeSeriesScaler must be fitted before transform")
         
+        rolling_mean, rolling_std = self.statistics_
+    
         if self.scale_method == 'standard':
             X_scaled = (X - rolling_mean) / (rolling_std + EPSILON)
             
@@ -108,6 +113,9 @@ class SeasonalDecomposer(Transformer):
         """Return decomposed components."""
         X = check_array(X)
         n_samples, n_features = X.shape
+        
+        if self.components_ is None:
+            raise ValidationError("SeasonalDecomposer must be fitted before transform")
         
         # Stack all components
         result = np.zeros((n_samples, n_features * 3))

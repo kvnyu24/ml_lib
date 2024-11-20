@@ -76,20 +76,12 @@ class InteractionFeatures(Transformer):
 
         self.interaction_pairs = interaction_pairs
         self.interaction_type = interaction_type
-        self._interaction_func = None
-        self._set_interaction_func()
-        
-    def _set_interaction_func(self):
-        """Set the interaction function based on interaction type."""
-        interaction_funcs = {
+        self._interaction_func = {
             'multiply': np.multiply,
             'add': np.add,
             'subtract': np.subtract,
             'divide': np.divide
-        }
-        if self.interaction_type not in interaction_funcs:
-            raise ValidationError("interaction_type must be one of: multiply, add, subtract, divide")
-        self._interaction_func = interaction_funcs[self.interaction_type]
+        }[interaction_type]
         
     def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'InteractionFeatures':
         """Fit transformer."""
