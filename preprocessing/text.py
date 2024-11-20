@@ -129,10 +129,12 @@ class TfidfVectorizer(Transformer):
         
     def transform(self, X: List[str]) -> np.ndarray:
         """Transform documents to TF-IDF matrix."""
+        if self.vocabulary_ is None or self.idf_ is None:
+            raise ValueError("Vocabulary not fitted. Call fit() first.")
+            
         n_docs = len(X)
         n_features = len(self.vocabulary_)
-        result = np.zeros((n_docs, n_features))
-        
+        result = np.zeros((n_docs, n_features))        
         for doc_idx, doc in enumerate(X):
             word_counts = Counter(doc.split())
             doc_length = sum(word_counts.values())
@@ -182,6 +184,9 @@ class Word2VecEncoder(Transformer):
         
     def transform(self, X: List[str]) -> np.ndarray:
         """Transform documents to averaged word vectors."""
+        if self.model is None:
+            raise ValueError("Model not fitted. Call fit() first.")
+
         result = np.zeros((len(X), self.vector_size))
         
         for idx, doc in enumerate(X):
