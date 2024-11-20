@@ -42,7 +42,7 @@ class BaseOptimizer(Optimizer):
     """Abstract base class for SVM optimizers."""
     
     @abstractmethod
-    def optimize(self, X: Features, y: Target, 
+    def optimize(self, X: Features, y: Target,
                 kernel_fn: Callable, C: float) -> np.ndarray:
         """Optimize SVM parameters."""
         pass
@@ -54,6 +54,13 @@ class SMOOptimizer(BaseOptimizer):
         super().__init__(learning_rate=1.0)  # Learning rate not used in SMO
         self.max_iter = max_iter
         self.tol = tol
+        
+    def compute_update(self, params: np.ndarray, gradients: np.ndarray) -> np.ndarray:
+        """Implement required compute_update method from Optimizer base class.
+        
+        For SMO, this is a pass-through since optimization happens in the optimize() method.
+        """
+        return params
         
     def optimize(self, X: Features, y: Target,
                 kernel_fn: Callable, C: float) -> np.ndarray:
@@ -92,8 +99,58 @@ class SMOOptimizer(BaseOptimizer):
     def _optimize_alpha_pair(self, i: int, j: int, alphas: np.ndarray,
                            X: np.ndarray, y: np.ndarray, Ei: float,
                            kernel_fn: Callable, C: float, b: float) -> int:
-        # Implementation of alpha pair optimization
+        if i == j:
+            return 0
+        
+        # Calculate error for second alpha
+        Ej = self._decision_function(alphas, y, kernel_fn, X, X[j], b) - y[j]
+        
+        # Save old alphas
+        old_ai, old_aj = alphas[i], alphas[j]
+        
+        # Compute L and H bounds
+        if y[i] != y[j]:
+            L = max(0, alphas[j] - alphas[i])
+            H = min(C, C + alphas[j] - alphas[i])
+        else:
+            L = max(0, alphas[i] + alphas[j] - C)
+            H = min(C, alphas[i] + alphas[j])
+        
+        if L == H:
+            return 0
+        
+        # Compute kernel values
+        eta = 2 * kernel_fn(X[i:i+1], X[j:j+1])[0][0]
+        eta -= kernel_fn(X[i:i+1], X[i:i+1])[0][0]
+        eta -= kernel_fn(X[j:j+1], X[j:j+1])[0][0]
+        
+        if eta >= 0:
+            return 0
+        
+        # Update alpha j
+        alphas[j] -= y[j] * (Ei - Ej) / eta
+        alphas[j] = min(H, max(L, alphas[j]))
+        
+        if abs(alphas[j] - old_aj) < 1e-5:
+            return 0
+        
+        # Update alpha i
+        alphas[i] += y[i] * y[j] * (old_aj - alphas[j])
+        
         return 1
+
+    def _update_bias(self, alphas: np.ndarray, y: np.ndarray, 
+                    kernel_fn: Callable, X: np.ndarray,
+                    i: int, j: int, b: float, C: float) -> float:
+        b1 = b - self._decision_function(alphas, y, kernel_fn, X, X[i], 0) + y[i]
+        b2 = b - self._decision_function(alphas, y, kernel_fn, X, X[j], 0) + y[j]
+        
+        if 0 < alphas[i] < C:
+            return b1
+        elif 0 < alphas[j] < C:
+            return b2
+        else:
+            return (b1 + b2) / 2
 
 class StochasticGradientOptimizer(BaseOptimizer):
     """Stochastic gradient descent optimization for linear SVM."""
@@ -229,10 +286,42 @@ class SVM(Estimator):
             self._init_kernel()
             
         # Optimize parameters
-        self.support_vectors_ = self._optimizer.optimize(
-            X, y, self._kernel_fn, self.C)
-            
+        self.alphas_ = self._optimizer.optimize(X, y, self._kernel_fn, self.C)
+        
+        # Find support vectors (where alpha > EPSILON)
+        support_mask = self.alphas_ > EPSILON
+        if not np.any(support_mask):
+            raise ValueError("No support vectors found. Try adjusting the C parameter.")
+        
+        # Set support vector attributes
+        self.support_vectors_ = X[support_mask]
+        self.support_labels_ = y[support_mask]
+        self.support_alphas_ = self.alphas_[support_mask]
+        
+        # Compute bias term
+        self.b_ = np.mean(y - self._decision_function_raw(X))
+        
+        # Store training data
+        self.X_ = X
+        self.y_ = y
+        
         return self
+        
+    def _decision_function_raw(self, X: Features) -> np.ndarray:
+        """Compute decision function without bias."""
+        decisions = np.zeros(X.shape[0])
+        for alpha, label, sv in zip(self.support_alphas_, 
+                                   self.support_labels_,
+                                   self.support_vectors_):
+            decisions += alpha * label * self._kernel_fn(X, sv.reshape(1, -1))
+        return decisions
+        
+    def decision_function(self, X: Features) -> np.ndarray:
+        """Compute decision function."""
+        check_is_fitted(self)
+        X = check_array(X)
+        
+        return self._decision_function_raw(X) + self.b_
         
     def predict(self, X: Features) -> Target:
         """Predict class labels for samples in X."""
@@ -242,13 +331,6 @@ class SVM(Estimator):
         # Compute decision function
         decision = self.decision_function(X)
         return np.sign(decision)
-        
-    def decision_function(self, X: Features) -> np.ndarray:
-        """Compute decision function."""
-        check_is_fitted(self)
-        X = check_array(X)
-        
-        return self._kernel_fn(X, self.support_vectors_)
 
 # Advanced kernel implementations
 class AdvancedKernels:
@@ -339,15 +421,16 @@ class SVMModelSelector:
                  param_distributions: Dict[str, Any],
                  n_iter: int = 100,
                  cv: int = 5,
-                 n_jobs: int = -1):
+                 n_jobs: int = -1,
+                 scoring: Union[str, Callable] = 'f1'):
         self.base_model = base_model
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.cv = cv
         self.n_jobs = n_jobs
+        self.scoring = scoring
         
-    def select_best_model(self, X: Features, y: Target,
-                         scoring: Union[str, Callable] = 'f1') -> Estimator:
+    def select_best_model(self, X: Features, y: Target) -> Estimator:
         """Find best hyperparameters using randomized search."""
         X, y = check_X_y(X, y)
         # Implement model selection

@@ -3,7 +3,7 @@
 import numpy as np
 from typing import List, Optional, Union, Tuple
 from core import Layer, check_array, check_is_fitted, EPSILON
-from .layers import BatchNormalization, GlobalAveragePooling2D
+from .layers import BatchNormalization, GlobalAveragePooling2D, Dense
 from .cnn import Conv2D
 
 class ResidualBlock(Layer):

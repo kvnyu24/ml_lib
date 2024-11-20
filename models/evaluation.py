@@ -1,6 +1,7 @@
 """Model evaluation and selection utilities."""
 
 import numpy as np
+import itertools
 from typing import Dict, List, Optional, Union, Callable, Any
 from core import (
     Estimator,
@@ -19,6 +20,8 @@ class CrossValidator:
     """Base class for cross-validation splitters."""
     
     def __init__(self, n_splits: int = 5, shuffle: bool = True, random_state: Optional[int] = None):
+        if n_splits < 2:
+            raise ValueError("n_splits must be >= 2")
         self.n_splits = n_splits
         self.shuffle = shuffle
         self.random_state = random_state
@@ -53,6 +56,9 @@ class StratifiedKFoldCV(CrossValidator):
     """Stratified K-Fold cross-validation splitter."""
     
     def split(self, X: np.ndarray, y: np.ndarray):
+        if y is None:
+            raise ValueError("y cannot be None for stratified split")
+            
         unique_classes = np.unique(y)
         class_indices = [np.where(y == c)[0] for c in unique_classes]
         
@@ -84,22 +90,34 @@ class ModelEvaluator:
                       cv: int = 5,
                       stratify: bool = True) -> Dict[str, List[float]]:
         """Perform cross-validation with multiple metrics."""
+        logger.info(f"Starting cross-validation with {cv} folds")
+        
+        X, y = check_X_y(X, y)
         cv_splitter = StratifiedKFoldCV(n_splits=cv) if stratify else KFoldCV(n_splits=cv)
         results = {name: [] for name in metrics}
         
-        for train_idx, val_idx in cv_splitter.split(X, y):
+        for fold, (train_idx, val_idx) in enumerate(cv_splitter.split(X, y)):
+            logger.debug(f"Processing fold {fold + 1}/{cv}")
+            
             X_train, X_val = X[train_idx], X[val_idx]
             y_train, y_val = y[train_idx], y[val_idx]
             
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_val)
-            
-            for name, metric in metrics.items():
-                if isinstance(metric, str):
-                    metric = get_metric(metric)
-                score = metric(y_val, y_pred)
-                results[name].append(score)
+            try:
+                model.fit(X_train, y_train)
+                y_pred = model.predict(X_val)
                 
+                for name, metric in metrics.items():
+                    if isinstance(metric, str):
+                        metric = get_metric(metric)
+                    score = metric(y_val, y_pred)
+                    results[name].append(score)
+                    logger.debug(f"Fold {fold + 1} - {name}: {score:.4f}")
+                    
+            except Exception as e:
+                logger.error(f"Error in fold {fold + 1}: {str(e)}")
+                raise
+                
+        logger.info("Cross-validation completed")
         return results
 
     @staticmethod
@@ -154,18 +172,9 @@ class ModelEvaluator:
 
     def evaluate(self, model: Any, X: np.ndarray, y: np.ndarray, 
                 metrics: List[str] = ['mse', 'mae', 'r2']) -> Dict[str, float]:
-        """Evaluate model performance on test data.
-        
-        Args:
-            model: Fitted model instance
-            X: Test features
-            y: Test targets
-            metrics: List of metric names to compute
-            
-        Returns:
-            Dictionary of metric names and values
-        """
+        """Evaluate model performance on test data."""
         check_is_fitted(model)
+        X, y = check_X_y(X, y)
         y_pred = model.predict(X)
         
         results = {}
@@ -200,6 +209,9 @@ class ModelSelector:
             
     def fit(self, X: np.ndarray, y: np.ndarray) -> 'ModelSelector':
         """Find best hyperparameters using grid search."""
+        logger.info("Starting grid search")
+        X, y = check_X_y(X, y)
+        
         if isinstance(self.scoring, str):
             self.scoring = get_metric(self.scoring)
             
@@ -207,6 +219,7 @@ class ModelSelector:
         cv = StratifiedKFoldCV(n_splits=self.cv)
         
         for params in self._get_param_combinations():
+            logger.debug(f"Evaluating parameters: {params}")
             self.model.set_params(**params)
             scores = []
             
@@ -219,6 +232,8 @@ class ModelSelector:
                 scores.append(self.scoring(y_val, y_pred))
                 
             mean_score = np.mean(scores)
+            logger.debug(f"Mean CV score: {mean_score:.4f}")
+            
             if mean_score > best_score:
                 best_score = mean_score
                 self.best_params_ = params

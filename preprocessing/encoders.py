@@ -13,8 +13,8 @@ class LabelEncoder(Transformer):
     """Encode categorical labels with value between 0 and n_classes-1."""
     
     def __init__(self):
-        self.classes_ = None
-        self.mapping_ = None
+        self.classes_: Optional[np.ndarray] = None
+        self.mapping_: Optional[Dict] = None
         
     def fit(self, y: np.ndarray) -> 'LabelEncoder':
         """Fit label encoder."""
@@ -26,6 +26,8 @@ class LabelEncoder(Transformer):
     def transform(self, y: np.ndarray) -> np.ndarray:
         """Transform labels to normalized encoding."""
         y = check_array(y, ensure_2d=False)
+        if self.mapping_ is None:
+            raise ValidationError("LabelEncoder has not been fit yet")
         return np.array([self.mapping_[val] for val in y])
 
 class OneHotEncoder(Transformer):
@@ -34,7 +36,7 @@ class OneHotEncoder(Transformer):
     def __init__(self, sparse: bool = False, handle_unknown: str = 'error'):
         self.sparse = sparse
         self.handle_unknown = handle_unknown
-        self.categories_ = None
+        self.categories_: Optional[List[np.ndarray]] = None
         
     def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'OneHotEncoder':
         """Fit OneHot encoder."""
@@ -47,6 +49,9 @@ class OneHotEncoder(Transformer):
         X = check_array(X)
         n_samples, n_features = X.shape
         
+        if self.categories_ is None:
+            raise ValidationError("OneHotEncoder has not been fit yet")
+            
         if self.sparse:
             # Implement sparse matrix output
             pass
@@ -56,8 +61,14 @@ class OneHotEncoder(Transformer):
         
         col_idx = 0
         for i, cats in enumerate(self.categories_):
-            idx = np.searchsorted(cats, X[:, i])
-            result[np.arange(n_samples), col_idx + idx] = 1
+            if self.handle_unknown == 'error':
+                idx = np.searchsorted(cats, X[:, i])
+                if not np.all(cats[idx] == X[:, i]):
+                    raise ValidationError(f"Found unknown categories in column {i}")
+            else:  # 'ignore'
+                mask = np.isin(X[:, i], cats)
+                idx = np.searchsorted(cats, X[:, i][mask])
+                result[mask, col_idx + idx] = 1
             col_idx += len(cats)
             
         return result
@@ -68,8 +79,8 @@ class OrdinalEncoder(Transformer):
     def __init__(self, categories: Optional[List[List]] = None, handle_unknown: str = 'error'):
         self.categories = categories
         self.handle_unknown = handle_unknown
-        self.categories_ = None
-        self.mappings_ = None
+        self.categories_: Optional[List[np.ndarray]] = None
+        self.mappings_: Optional[List[Dict]] = None
         
     def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'OrdinalEncoder':
         """Fit ordinal encoder."""
@@ -78,7 +89,7 @@ class OrdinalEncoder(Transformer):
         if self.categories is None:
             self.categories_ = [np.unique(X[:, i]) for i in range(X.shape[1])]
         else:
-            self.categories_ = self.categories
+            self.categories_ = [np.array(cats) for cats in self.categories]
             
         self.mappings_ = [{val: idx for idx, val in enumerate(cats)} 
                          for cats in self.categories_]
@@ -89,11 +100,17 @@ class OrdinalEncoder(Transformer):
         X = check_array(X)
         n_samples, n_features = X.shape
         
+        if self.mappings_ is None:
+            raise ValidationError("OrdinalEncoder has not been fit yet")
+            
         X_out = np.zeros_like(X, dtype=np.int64)
         
         for i, mapping in enumerate(self.mappings_):
             if self.handle_unknown == 'error':
-                X_out[:, i] = [mapping[val] for val in X[:, i]]
+                try:
+                    X_out[:, i] = [mapping[val] for val in X[:, i]]
+                except KeyError as e:
+                    raise ValidationError(f"Found unknown category in column {i}")
             else:  # 'ignore'
                 X_out[:, i] = [mapping.get(val, -1) for val in X[:, i]]
                 
@@ -104,8 +121,8 @@ class TargetEncoder(Transformer):
     
     def __init__(self, smoothing: float = 10.0):
         self.smoothing = smoothing
-        self.encodings_ = None
-        self.global_mean_ = None
+        self.encodings_: Optional[List[Dict]] = None
+        self.global_mean_: Optional[float] = None
         
     def fit(self, X: np.ndarray, y: np.ndarray) -> 'TargetEncoder':
         """Fit target encoder."""
@@ -138,6 +155,10 @@ class TargetEncoder(Transformer):
     def transform(self, X: np.ndarray) -> np.ndarray:
         """Transform X using target encoding."""
         X = check_array(X)
+        
+        if self.encodings_ is None or self.global_mean_ is None:
+            raise ValidationError("TargetEncoder has not been fit yet")
+            
         X_out = np.zeros_like(X, dtype=np.float64)
         
         for i, encoding in enumerate(self.encodings_):

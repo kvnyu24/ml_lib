@@ -27,7 +27,7 @@ class FrequencyEncoder(CategoricalEncoder):
     
     def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None) -> 'FrequencyEncoder':
         """Calculate value frequencies."""
-        X = check_array(X, dtype=object)
+        X = check_array(X, dtype=np.dtype('O'))
         
         self.mapping_ = {}
         for col in range(X.shape[1]):
@@ -38,7 +38,7 @@ class FrequencyEncoder(CategoricalEncoder):
         
     def transform(self, X: np.ndarray) -> np.ndarray:
         """Transform categories to frequencies."""
-        X = check_array(X, dtype=object)
+        X = check_array(X, dtype=np.dtype('O'))
         result = np.zeros_like(X, dtype=float)
         
         for col in range(X.shape[1]):
@@ -52,7 +52,7 @@ class WOEEncoder(CategoricalEncoder):
     
     def fit(self, X: np.ndarray, y: np.ndarray) -> 'WOEEncoder':
         """Calculate WOE values."""
-        X = check_array(X, dtype=object)
+        X = check_array(X, dtype=np.dtype('O'))
         y = check_array(y, ensure_2d=False)
         
         if len(np.unique(y)) != 2:
@@ -76,7 +76,7 @@ class WOEEncoder(CategoricalEncoder):
         
     def transform(self, X: np.ndarray) -> np.ndarray:
         """Transform categories to WOE values."""
-        X = check_array(X, dtype=object)
+        X = check_array(X, dtype=np.dtype('O'))
         result = np.zeros_like(X, dtype=float)
         
         for col in range(X.shape[1]):
