@@ -56,7 +56,7 @@ class GraphFeatureExtractor(Transformer):
             features_dict = {}
             
             if 'degree' in self.features:
-                degrees = [d for _, d in graph.degree]
+                degrees = [d for _, d in nx.degree(graph)]
                 features_dict['avg_degree'] = np.mean(degrees)
                 features_dict['max_degree'] = np.max(degrees)
                 
@@ -70,7 +70,10 @@ class GraphFeatureExtractor(Transformer):
                 
             if 'clustering' in self.features:
                 clustering_coeffs = nx.clustering(graph)
-                features_dict['avg_clustering'] = np.mean(list(clustering_coeffs.values()))
+                if isinstance(clustering_coeffs, dict):
+                    features_dict['avg_clustering'] = np.mean(list(clustering_coeffs.values()))
+                else:
+                    features_dict['avg_clustering'] = clustering_coeffs
                 
             features_list.append(np.array(list(features_dict.values())))
             
