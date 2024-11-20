@@ -106,6 +106,19 @@ class Estimator(ABC):
         else:
             X = check_array(X)
 
+    def update_params(self, gradients: Dict[str, np.ndarray], learning_rate: float) -> None:
+        """Update model parameters using gradients.
+        
+        Args:
+            gradients: Dictionary of parameter gradients
+            learning_rate: Learning rate for updates
+        """
+        params = self.get_params()
+        for key, grad in gradients.items():
+            if key in params:
+                params[key] -= learning_rate * grad
+        self.set_params(**params)
+
 class Optimizer(ABC):
     """Base class for optimization algorithms."""
     

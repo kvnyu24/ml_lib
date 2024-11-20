@@ -1,7 +1,7 @@
 """Missing value imputation utilities."""
 
 import numpy as np
-from typing import Optional, Union, Dict
+from typing import Optional, Union, Dict, Literal
 from scipy.stats import mode
 from models.neighbors import KNeighborsRegressor
 from core import (
@@ -67,7 +67,7 @@ class MissingValueImputer(Transformer):
 class KNNImputer(Transformer):
     """Imputation using k-Nearest Neighbors."""
     
-    def __init__(self, n_neighbors: int = 5, weights: str = 'uniform'):
+    def __init__(self, n_neighbors: int = 5, weights: Literal['uniform', 'distance'] = 'uniform'):
         """
         Args:
             n_neighbors: Number of neighbors to use
@@ -92,7 +92,7 @@ class KNNImputer(Transformer):
         # Initialize kNN model
         self.knn_ = KNeighborsRegressor(
             n_neighbors=self.n_neighbors,
-            weights=self.weights
+            weights=self.weights if self.weights in ('uniform', 'distance') else 'uniform'  # type: ignore
         )
         
         # Fit on non-missing data

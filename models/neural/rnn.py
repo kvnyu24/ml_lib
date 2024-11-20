@@ -45,12 +45,12 @@ class RNNCell(Layer):
         else:
             self.kernel = np.random.randn(input_dim, self.units) * 0.01
             
-        # Initialize recurrent weights
+        # Initialize recurrent weights with explicit numpy array casting
         if self.recurrent_initializer == 'orthogonal':
-            self.recurrent_kernel = self._generate_orthogonal_matrix(self.units)
+            self.recurrent_kernel = np.array(self._generate_orthogonal_matrix(self.units))
         else:
             limit = np.sqrt(6 / (self.units * 2))
-            self.recurrent_kernel = np.random.uniform(-limit, limit, (self.units, self.units))
+            self.recurrent_kernel = np.array(np.random.uniform(-limit, limit, (self.units, self.units)))
             
         if self.use_bias:
             self.bias = np.zeros(self.units)
@@ -76,10 +76,13 @@ class RNNCell(Layer):
             x_t = inputs[:, t, :]
             
             # Compute hidden state
+            h = np.asarray(h) if isinstance(h, np.ndarray) else np.zeros((batch_size, self.units))
+            if self.kernel is None or self.recurrent_kernel is None:
+                raise ValueError("Kernel or recurrent kernel not initialized")
             h = self._activation(
                 np.dot(x_t, self.kernel) +
                 np.dot(h, self.recurrent_kernel) +
-                (self.bias if self.use_bias else 0)
+                (self.bias[np.newaxis, :] if self.use_bias and self.bias is not None else 0)
             )
             hidden_states[:, t, :] = h
             
@@ -116,6 +119,8 @@ class RNNCell(Layer):
             
             # Weight gradients
             dkernel += np.dot(self.inputs[:, t, :].T, dh)
+            if self.states is None:
+                raise ValueError("Hidden states not computed")
             drecurrent += np.dot(
                 self.states[:, t-1, :].T if t > 0 
                 else np.zeros((batch_size, self.units)).T, 
