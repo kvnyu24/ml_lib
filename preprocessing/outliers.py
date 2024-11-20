@@ -41,10 +41,13 @@ class IQROutlierDetector(OutlierDetector):
         quartiles = np.percentile(X, [25, 75], axis=0)
         if quartiles is None or np.any(np.isnan(quartiles)):
             raise ValueError("Could not compute quartiles - check input data")
-
         
         self.q1_ = quartiles[0]
         self.q3_ = quartiles[1]
+
+        if self.q1_ is None or self.q3_ is None:
+            raise ValueError("Quartiles contain NaN values - check input data")
+
         self.iqr_ = self.q3_ - self.q1_
         
         return self

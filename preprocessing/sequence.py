@@ -19,10 +19,17 @@ class SequencePadder(Transformer):
             self._max_seq_length = max(len(seq) for seq in X)
         else:
             self._max_seq_length = self.max_length
+        
+        if self._max_seq_length is None:
+            raise ValueError("Failed to determine sequence length")
+        
         return self
         
     def transform(self, X: List[np.ndarray]) -> np.ndarray:
         """Pad sequences."""
+        if self._max_seq_length is None:
+            raise ValueError("SequencePadder must be fitted before transform")
+
         padded = []
         
         for seq in X:
